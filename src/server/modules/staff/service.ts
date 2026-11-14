@@ -48,7 +48,7 @@ export async function listStaff(tx: Tx, ctx: GymContext) {
       userId: gymStaff.userId,
       inviteExpiresAt: gymStaff.inviteExpiresAt,
       createdAt: gymStaff.createdAt,
-      assignedMembers: sql<number>`(select count(*)::int from ${members} m where m.assigned_trainer_id = ${gymStaff.id} and m.status = 'active')`,
+      assignedMembers: sql<number>`(select count(*)::int from members m where m.assigned_trainer_id = "gym_staff"."id" and m.status = 'active')`,
     })
     .from(gymStaff)
     .where(eq(gymStaff.gymId, ctx.gym.id))

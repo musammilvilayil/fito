@@ -49,6 +49,8 @@
 
 @layer base {
   html {
+    /* Keep scrolled-to elements clear of the sticky mobile header. */
+    scroll-padding-top: 72px;
     color-scheme: dark;
     background: var(--color-canvas);
     color: var(--color-ink);

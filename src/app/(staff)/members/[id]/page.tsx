@@ -11,7 +11,11 @@ import { formatPhone } from "@/shared/phone";
 import { GENDER_LABELS } from "@/shared/schemas/member";
 import { hasPermission, inGym } from "@/server/auth/context";
 import { requireStaffContext } from "@/server/auth/page";
+import { renewalStart } from "@/shared/membership";
+import { listMemberMemberships, listMemberPayments } from "@/server/modules/memberships/service";
 import { getMember, gymToday } from "@/server/modules/members/service";
+import { listPlans } from "@/server/modules/plans/service";
+import { MemberBilling } from "./billing/member-billing";
 import { listTrainers } from "@/server/modules/staff/service";
 import { MemberActions } from "./member-actions";
 import { TrainerPicker } from "./trainer-picker";
@@ -21,7 +25,16 @@ export const metadata: Metadata = { title: "Member" };
 export default async function MemberPage({ params }: PageProps<"/members/[id]">) {
   const { id } = await params;
   const ctx = await requireStaffContext();
-  const [member, trainers] = await inGym(ctx, (tx) => Promise.all([getMember(tx, ctx, id), listTrainers(tx, ctx)]));
+  const canBilling = hasPermission(ctx, "payments.view") || hasPermission(ctx, "memberships.manage");
+  const [member, trainers, billing] = await inGym(ctx, (tx) =>
+    Promise.all([
+      getMember(tx, ctx, id),
+      listTrainers(tx, ctx),
+      canBilling
+        ? Promise.all([listMemberMemberships(tx, ctx, id), listMemberPayments(tx, ctx, id).catch(() => []), listPlans(tx, ctx)])
+        : Promise.resolve(null),
+    ]),
+  );
   const today = gymToday(ctx);
   const canManage = hasPermission(ctx, "members.manage");
   const daysLeft = member.current ? diffDays(today, member.current.validUntil) : null;
@@ -61,8 +74,8 @@ export default async function MemberPage({ params }: PageProps<"/members/[id]">)
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
-        <div className="space-y-6">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="min-w-0 space-y-6">
           <Card>
             <CardHeader title="Membership" />
             <CardBody>
@@ -87,6 +100,58 @@ export default async function MemberPage({ params }: PageProps<"/members/[id]">)
               )}
             </CardBody>
           </Card>
+
+          {billing && (
+            <MemberBilling
+              memberId={member.id}
+              memberName={member.fullName}
+              memberActive={member.status === "active"}
+              today={today}
+              suggestedStart={renewalStart(member.current?.validUntil ?? null, today)}
+              perms={{
+                sell: hasPermission(ctx, "memberships.manage"),
+                record: hasPermission(ctx, "payments.record"),
+                void: hasPermission(ctx, "payments.void"),
+              }}
+              memberships={billing[0].map((m) => ({
+                id: m.id,
+                planName: m.planName,
+                durationUnit: m.durationUnit,
+                durationValue: m.durationValue,
+                kind: m.kind,
+                startDate: m.startDate,
+                endDate: m.endDate,
+                totalPaise: m.totalPaise,
+                discountPaise: m.discountPaise,
+                paidPaise: m.paidPaise,
+                outstandingPaise: m.outstandingPaise,
+                phase: m.phase as never,
+                frozenSince: m.frozenSince,
+                cancelReason: m.cancelReason,
+              }))}
+              payments={billing[1].map((p) => ({
+                id: p.id,
+                kind: p.kind,
+                amountPaise: p.amountPaise,
+                method: p.method,
+                status: p.status,
+                paidAt: p.paidAt.toISOString(),
+                receiptNumber: p.receiptNumber,
+                reference: p.reference,
+                notes: p.notes,
+                membershipId: p.membershipId,
+                refundOfId: p.refundOfId,
+              }))}
+              plans={billing[2].map((p) => ({
+                id: p.id,
+                name: p.name,
+                durationUnit: p.durationUnit,
+                durationValue: p.durationValue,
+                pricePaise: p.pricePaise,
+                admissionFeePaise: p.admissionFeePaise,
+              }))}
+            />
+          )}
 
           <Card>
             <CardHeader title="Details" />
@@ -119,7 +184,7 @@ export default async function MemberPage({ params }: PageProps<"/members/[id]">)
           )}
         </div>
 
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           <Card>
             <CardHeader title="Trainer" />
             <CardBody>

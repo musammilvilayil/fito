@@ -7,7 +7,7 @@ import { acceptInvite } from "@/server/modules/auth/service";
 import { importMembers } from "@/server/modules/members/import";
 import { assignTrainer, createMember, getMember, listMembers, setMemberStatus, updateMember } from "@/server/modules/members/service";
 import { getMemberOverview } from "@/server/modules/reports/dashboard";
-import { inviteStaff } from "@/server/modules/staff/service";
+import { inviteStaff, listStaff } from "@/server/modules/staff/service";
 import { adminPool, contextFor, meta, newGym, resetDb, uniquePhone } from "../support/db";
 
 const base = {
@@ -125,6 +125,8 @@ describe("members", () => {
     const other = await addMember(owner.ctx, "Not Mine");
     await inGym(owner.ctx, (tx) => assignTrainer(tx, owner.ctx, mine.id, trainerCtx.staffId!));
 
+    const staff = await inGym(owner.ctx, (tx) => listStaff(tx, owner.ctx));
+    expect(staff.find((x) => x.fullName === "Tara Trainer")?.assignedMembers).toBe(1);
     const seen = await list(trainerCtx);
     expect(seen.items.map((i) => i.fullName)).toEqual(["Mine"]);
     const blocked = await inGym(trainerCtx, (tx) => getMember(tx, trainerCtx, other.id)).catch((e) => e);

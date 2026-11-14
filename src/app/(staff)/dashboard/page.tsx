@@ -1,4 +1,4 @@
-import { CalendarClock, UserCheck, UserPlus, Users } from "lucide-react";
+import { CalendarClock, CalendarDays, IndianRupee, UserCheck, UserPlus, Users, Wallet } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { StandingBadge } from "@/components/members/standing-badge";
@@ -7,6 +7,8 @@ import { Card, CardHeader } from "@/components/ui/card";
 import { Avatar, PageHeader, StatCard } from "@/components/ui/page";
 import { EmptyState } from "@/components/ui/states";
 import { formatDate } from "@/shared/dates";
+import { formatINR } from "@/shared/money";
+import { paymentSummary } from "@/server/modules/payments/service";
 import { hasPermission, inGym } from "@/server/auth/context";
 import { requireStaffContext } from "@/server/auth/page";
 import { getSetupStatus } from "@/server/modules/gyms/setup";
@@ -23,8 +25,13 @@ function greeting(timeZone: string) {
 export default async function DashboardPage() {
   const ctx = await requireStaffContext();
   const canSeeMembers = hasPermission(ctx, "members.view_all") || hasPermission(ctx, "workouts.manage");
-  const [setup, overview] = await inGym(ctx, (tx) =>
-    Promise.all([getSetupStatus(tx, ctx), canSeeMembers ? getMemberOverview(tx, ctx) : Promise.resolve(null)]),
+  const canSeeMoney = hasPermission(ctx, "payments.view");
+  const [setup, overview, money] = await inGym(ctx, (tx) =>
+    Promise.all([
+      getSetupStatus(tx, ctx),
+      canSeeMembers ? getMemberOverview(tx, ctx) : Promise.resolve(null),
+      canSeeMoney ? paymentSummary(tx, ctx) : Promise.resolve(null),
+    ]),
   );
   const firstName = ctx.user.fullName.split(" ")[0];
   const scopeLabel = hasPermission(ctx, "members.view_all") ? "" : " (your members)";
@@ -33,6 +40,23 @@ export default async function DashboardPage() {
     <>
       <PageHeader eyebrow={ctx.gym.name} title={`${greeting(ctx.gym.timezone)}, ${firstName}`} description="Here's what needs your attention today." />
       <SetupChecklist status={setup} canManageGym={hasPermission(ctx, "gym.manage")} canManageStaff={hasPermission(ctx, "staff.manage")} />
+
+      {money && (
+        <div className="mb-4 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
+          <StatCard label="Collected today" value={formatINR(money.today)} icon={IndianRupee} tone="lime" hint={`${money.todayCount} payment${money.todayCount === 1 ? "" : "s"}`} />
+          <StatCard label="This month" value={formatINR(money.month)} icon={CalendarDays} hint="Net of refunds" />
+          <Link href="/payments?view=dues" className="col-span-2 lg:col-span-1">
+            <StatCard
+              label="Outstanding dues"
+              value={formatINR(money.outstanding)}
+              icon={Wallet}
+              tone={money.outstanding > 0 ? "warning" : "default"}
+              hint={`${money.membersWithDues} member${money.membersWithDues === 1 ? "" : "s"} · view list`}
+              className="h-full transition-colors hover:border-line-strong"
+            />
+          </Link>
+        </div>
+      )}
 
       {overview && (
         <>

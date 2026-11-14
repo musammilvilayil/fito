@@ -13,6 +13,10 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   serverExternalPackages: ["pg"],
+  // Receipt PDFs embed these fonts; make sure serverless bundles include them.
+  outputFileTracingIncludes: {
+    "/api/v1/payments/[id]/receipt": ["./assets/fonts/**"],
+  },
   images: {
     remotePatterns: [{ protocol: "https", hostname: "raw.githubusercontent.com" }],
   },

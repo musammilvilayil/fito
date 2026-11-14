@@ -102,3 +102,14 @@ describe("permissions", () => {
     expect(can("manager", "gym.manage")).toBe(false);
   });
 });
+
+describe("compact rupees", () => {
+  it("uses Indian units", async () => {
+    const { compactRupees } = await import("@/shared/money");
+    expect(compactRupees(0)).toBe("0");
+    expect(compactRupees(1250000)).toBe("12.5K");
+    expect(compactRupees(10000000)).toBe("1L");
+    expect(compactRupees(1000000000)).toBe("1Cr");
+    expect(compactRupees(-500000)).toBe("-5K");
+  });
+});

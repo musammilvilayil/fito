@@ -24,6 +24,22 @@ export function SetupChecklist({
       show: canManageGym,
     },
     {
+      done: status.plans > 0,
+      title: "Create membership plans",
+      description: "Monthly, quarterly, annual or custom, with your prices and admission fee.",
+      href: "/plans",
+      cta: "Add plans",
+      show: canManageGym,
+    },
+    {
+      done: status.members > 0,
+      title: "Add your members",
+      description: "Import your existing register from Excel, or add members one by one.",
+      href: "/members/import",
+      cta: "Import members",
+      show: canManageGym,
+    },
+    {
       done: status.staff > 0,
       title: "Invite your team",
       description: "Add trainers and front-desk staff. Each gets their own login and role.",

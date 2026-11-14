@@ -25,3 +25,14 @@ export function formatINR(paise: number, opts: { symbol?: boolean; alwaysPaise?:
 export function percentOf(paise: number, percent: number): number {
   return Math.round((paise * percent) / 100);
 }
+
+/** Compact rupee labels for chart axes: 1250000 paise -> "12.5K", 1 lakh -> "1L", 1 crore -> "1Cr". */
+export function compactRupees(paise: number): string {
+  const r = paise / 100;
+  const sign = r < 0 ? "-" : "";
+  const a = Math.abs(r);
+  if (a >= 1_00_00_000) return `${sign}${(a / 1_00_00_000).toFixed(1).replace(/\.0$/, "")}Cr`;
+  if (a >= 1_00_000) return `${sign}${(a / 1_00_000).toFixed(1).replace(/\.0$/, "")}L`;
+  if (a >= 1000) return `${sign}${(a / 1000).toFixed(1).replace(/\.0$/, "")}K`;
+  return `${sign}${Math.round(a)}`;
+}

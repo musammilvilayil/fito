@@ -1,7 +1,7 @@
 import "server-only";
 import { and, eq, sql } from "drizzle-orm";
 import type { GymContext } from "../../auth/context";
-import { gymStaff, gyms, membershipPlans, members } from "../../db/schema";
+import { gymStaff, gyms } from "../../db/schema";
 import type { Tx } from "../../db/tx";
 
 export type SetupStatus = {
@@ -17,8 +17,8 @@ export async function getSetupStatus(tx: Tx, ctx: GymContext): Promise<SetupStat
     .select({
       phone: gyms.phone,
       addressLine: gyms.addressLine,
-      plans: sql<number>`(select count(*)::int from ${membershipPlans} where ${membershipPlans.gymId} = ${gyms.id} and ${membershipPlans.isActive})`,
-      members: sql<number>`(select count(*)::int from ${members} where ${members.gymId} = ${gyms.id})`,
+      plans: sql<number>`(select count(*)::int from membership_plans mp where mp.gym_id = "gyms"."id" and mp.is_active)`,
+      members: sql<number>`(select count(*)::int from members m where m.gym_id = "gyms"."id")`,
     })
     .from(gyms)
     .where(eq(gyms.id, ctx.gym.id));
