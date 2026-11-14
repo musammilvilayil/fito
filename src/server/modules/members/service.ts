@@ -56,7 +56,10 @@ export async function listMembers(tx: Tx, ctx: GymContext, query: MemberListQuer
   const conditions = [sql`m.gym_id = ${ctx.gym.id}`, visibilityFilter(ctx)];
   if (query.q) {
     const like = `%${query.q.replace(/[%_\\]/g, (c) => `\\${c}`)}%`;
-    const digits = query.q.replace(/\D/g, "");
+    // Only treat the search as a phone number when it is all digits/spaces/+,
+    // so "M0001" matches the member code and not every phone containing 0001.
+    const looksLikePhone = /^[\d\s+()-]+$/.test(query.q);
+    const digits = looksLikePhone ? query.q.replace(/\D/g, "").replace(/^(91|0)(?=\d{10}$)/, "") : "";
     conditions.push(
       sql`(m.full_name ilike ${like} or m.member_code ilike ${like} or m.email ilike ${like}${
         digits.length >= 3 ? sql` or m.phone like ${`%${digits}%`}` : sql``
