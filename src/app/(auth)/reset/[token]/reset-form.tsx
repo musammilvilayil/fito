@@ -25,6 +25,7 @@ export function ResetForm({ token }: { token: string }) {
 
   return (
     <form
+      method="post"
       noValidate
       className="space-y-4"
       onSubmit={(e) => {

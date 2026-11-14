@@ -3,8 +3,9 @@ import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE } from "../auth/session";
 import { env } from "../env";
 
+/** Secure cookies whenever the app is served over HTTPS (always the case in production). */
 function secure() {
-  return env().APP_URL.startsWith("https://") || process.env.NODE_ENV === "production";
+  return env().APP_URL.startsWith("https://");
 }
 
 /**

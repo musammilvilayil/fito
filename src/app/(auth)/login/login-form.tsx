@@ -13,6 +13,7 @@ export function LoginForm() {
 
   return (
     <form
+      method="post"
       noValidate
       onSubmit={(e) => {
         e.preventDefault();

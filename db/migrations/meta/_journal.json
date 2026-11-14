@@ -15,6 +15,13 @@
       "when": 1794683026129,
       "tag": "0001_rls_and_auth_functions",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794684296529,
+      "tag": "0002_payment_method_other",
+      "breakpoints": true
     }
   ]
 }

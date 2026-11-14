@@ -23,9 +23,11 @@ export async function resetDb() {
 export const meta = { ip: "127.0.0.1", userAgent: "vitest" };
 
 let seq = 0;
+const runPrefix = String(100 + Math.floor(Math.random() * 900));
+/** Unique valid Indian mobile number within this test process. */
 export function uniquePhone(): string {
   seq += 1;
-  return `+9198${String(Date.now() % 100000).padStart(5, "0")}${String(seq).padStart(3, "0")}`;
+  return `+919${runPrefix}${String(seq).padStart(6, "0")}`;
 }
 
 /** Registers a new gym owner and returns their gym context. */

@@ -18,6 +18,7 @@ export function ChangePasswordForm() {
       <CardHeader title="Change password" />
       <CardBody>
         <form
+          method="post"
           noValidate
           className="space-y-4"
           onSubmit={(e) => {

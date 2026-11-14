@@ -1,0 +1,174 @@
+import { ArrowLeft, CalendarDays, Mail, MapPin, Phone, ShieldAlert, User } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
+import type { ReactNode } from "react";
+import { StandingBadge } from "@/components/members/standing-badge";
+import { renewalReminder, WhatsAppButton } from "@/components/members/whatsapp-button";
+import { Card, CardBody, CardHeader } from "@/components/ui/card";
+import { Avatar } from "@/components/ui/page";
+import { formatDate, diffDays } from "@/shared/dates";
+import { formatPhone } from "@/shared/phone";
+import { GENDER_LABELS } from "@/shared/schemas/member";
+import { hasPermission, inGym } from "@/server/auth/context";
+import { requireStaffContext } from "@/server/auth/page";
+import { getMember, gymToday } from "@/server/modules/members/service";
+import { listTrainers } from "@/server/modules/staff/service";
+import { MemberActions } from "./member-actions";
+import { TrainerPicker } from "./trainer-picker";
+
+export const metadata: Metadata = { title: "Member" };
+
+export default async function MemberPage({ params }: PageProps<"/members/[id]">) {
+  const { id } = await params;
+  const ctx = await requireStaffContext();
+  const [member, trainers] = await inGym(ctx, (tx) => Promise.all([getMember(tx, ctx, id), listTrainers(tx, ctx)]));
+  const today = gymToday(ctx);
+  const canManage = hasPermission(ctx, "members.manage");
+  const daysLeft = member.current ? diffDays(today, member.current.validUntil) : null;
+
+  return (
+    <>
+      <Link href="/members" className="mb-5 inline-flex items-center gap-1.5 text-[13px] text-ink-muted hover:text-ink">
+        <ArrowLeft className="size-4" /> Members
+      </Link>
+
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4">
+          <Avatar name={member.fullName} size={56} />
+          <div className="min-w-0">
+            <h1 className="truncate text-[22px] font-semibold tracking-tight sm:text-[26px]">{member.fullName}</h1>
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-[13px] text-ink-muted">
+              <span className="font-mono text-[12.5px]">{member.memberCode}</span>
+              <span aria-hidden>·</span>
+              <StandingBadge standing={member.standing} />
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {(member.standing === "expiring" || member.standing === "expired") && (
+            <WhatsAppButton phone={member.phone} label="Renewal reminder" message={renewalReminder(member.fullName, ctx.gym.name, member.current?.validUntil ?? null)} />
+          )}
+          {canManage && (
+            <MemberActions
+              memberId={member.id}
+              fullName={member.fullName}
+              phone={member.phone}
+              status={member.status}
+              hasAccount={member.hasAccount}
+              gymName={ctx.gym.name}
+            />
+          )}
+        </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+        <div className="space-y-6">
+          <Card>
+            <CardHeader title="Membership" />
+            <CardBody>
+              {member.current ? (
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <Stat label="Plan" value={member.current.planName} />
+                  <Stat label="Started" value={formatDate(member.current.startDate)} />
+                  <Stat
+                    label="Valid until"
+                    value={formatDate(member.current.validUntil)}
+                    hint={
+                      daysLeft === null
+                        ? undefined
+                        : daysLeft >= 0
+                          ? `${daysLeft} day${daysLeft === 1 ? "" : "s"} left`
+                          : `Expired ${-daysLeft} day${daysLeft === -1 ? "" : "s"} ago`
+                    }
+                  />
+                </div>
+              ) : (
+                <p className="text-sm text-ink-muted">No membership on record yet.</p>
+              )}
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardHeader title="Details" />
+            <CardBody className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
+              <Detail icon={Phone} label="Phone" value={member.phone ? formatPhone(member.phone) : null} />
+              <Detail icon={Mail} label="Email" value={member.email} />
+              <Detail icon={User} label="Gender" value={member.gender ? GENDER_LABELS[member.gender as keyof typeof GENDER_LABELS] : null} />
+              <Detail icon={CalendarDays} label="Date of birth" value={member.dateOfBirth ? formatDate(member.dateOfBirth) : null} />
+              <Detail icon={CalendarDays} label="Joined" value={formatDate(member.joinedOn)} />
+              <Detail icon={MapPin} label="Address" value={member.address} />
+              <Detail
+                icon={ShieldAlert}
+                label="Emergency contact"
+                value={
+                  member.emergencyContactName || member.emergencyContactPhone
+                    ? [member.emergencyContactName, member.emergencyContactPhone ? formatPhone(member.emergencyContactPhone) : null]
+                        .filter(Boolean)
+                        .join(" · ")
+                    : null
+                }
+              />
+            </CardBody>
+          </Card>
+
+          {member.notes && (
+            <Card>
+              <CardHeader title="Notes" />
+              <CardBody className="whitespace-pre-wrap text-sm text-ink-muted">{member.notes}</CardBody>
+            </Card>
+          )}
+        </div>
+
+        <div className="space-y-6">
+          <Card>
+            <CardHeader title="Trainer" />
+            <CardBody>
+              {hasPermission(ctx, "members.assign_trainer") ? (
+                <TrainerPicker memberId={member.id} current={member.assignedTrainerId} trainers={trainers} />
+              ) : (
+                <p className="text-sm">{member.trainerName ?? <span className="text-ink-muted">Not assigned</span>}</p>
+              )}
+            </CardBody>
+          </Card>
+          <Card>
+            <CardHeader title="FITO app access" />
+            <CardBody className="text-sm text-ink-muted">
+              {member.hasAccount ? (
+                <p>
+                  <span className="font-medium text-success">Active.</span> {member.fullName.split(" ")[0]} can sign in to see their membership,
+                  check-in code and workouts.
+                </p>
+              ) : member.inviteActive && member.inviteExpiresAt ? (
+                <p>Invited. The link is valid until {formatDate(member.inviteExpiresAt.toISOString().slice(0, 10))}.</p>
+              ) : (
+                <p>Not signed up yet. Send an invite link from the menu.</p>
+              )}
+            </CardBody>
+          </Card>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
+  return (
+    <div>
+      <div className="text-[12px] text-ink-subtle">{label}</div>
+      <div className="mt-1 font-medium">{value}</div>
+      {hint && <div className="mt-0.5 text-[12px] text-ink-muted">{hint}</div>}
+    </div>
+  );
+}
+
+function Detail({ icon: Icon, label, value }: { icon: typeof Phone; label: string; value: ReactNode }) {
+  return (
+    <div className="flex gap-3">
+      <Icon className="mt-0.5 size-4 shrink-0 text-ink-subtle" aria-hidden />
+      <div className="min-w-0">
+        <div className="text-[12px] text-ink-subtle">{label}</div>
+        <div className="mt-0.5 break-words text-sm">{value ?? <span className="text-ink-subtle">—</span>}</div>
+      </div>
+    </div>
+  );
+}

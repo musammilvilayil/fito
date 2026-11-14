@@ -1,8 +1,16 @@
+import { CalendarClock, UserCheck, UserPlus, Users } from "lucide-react";
 import type { Metadata } from "next";
-import { PageHeader } from "@/components/ui/page";
-import { inGym } from "@/server/auth/context";
+import Link from "next/link";
+import { StandingBadge } from "@/components/members/standing-badge";
+import { renewalReminder, WhatsAppButton } from "@/components/members/whatsapp-button";
+import { Card, CardHeader } from "@/components/ui/card";
+import { Avatar, PageHeader, StatCard } from "@/components/ui/page";
+import { EmptyState } from "@/components/ui/states";
+import { formatDate } from "@/shared/dates";
+import { hasPermission, inGym } from "@/server/auth/context";
 import { requireStaffContext } from "@/server/auth/page";
 import { getSetupStatus } from "@/server/modules/gyms/setup";
+import { getMemberOverview, type DashboardMember } from "@/server/modules/reports/dashboard";
 import { SetupChecklist } from "./setup-checklist";
 
 export const metadata: Metadata = { title: "Dashboard" };
@@ -14,13 +22,103 @@ function greeting(timeZone: string) {
 
 export default async function DashboardPage() {
   const ctx = await requireStaffContext();
-  const setup = await inGym(ctx, (tx) => getSetupStatus(tx, ctx));
+  const canSeeMembers = hasPermission(ctx, "members.view_all") || hasPermission(ctx, "workouts.manage");
+  const [setup, overview] = await inGym(ctx, (tx) =>
+    Promise.all([getSetupStatus(tx, ctx), canSeeMembers ? getMemberOverview(tx, ctx) : Promise.resolve(null)]),
+  );
   const firstName = ctx.user.fullName.split(" ")[0];
+  const scopeLabel = hasPermission(ctx, "members.view_all") ? "" : " (your members)";
 
   return (
     <>
       <PageHeader eyebrow={ctx.gym.name} title={`${greeting(ctx.gym.timezone)}, ${firstName}`} description="Here's what needs your attention today." />
-      <SetupChecklist status={setup} canManageGym={ctx.permissions.has("gym.manage")} canManageStaff={ctx.permissions.has("staff.manage")} />
+      <SetupChecklist status={setup} canManageGym={hasPermission(ctx, "gym.manage")} canManageStaff={hasPermission(ctx, "staff.manage")} />
+
+      {overview && (
+        <>
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+            <StatCard label={`Active members${scopeLabel}`} value={overview.active} icon={UserCheck} tone="lime" hint={overview.expiring > 0 ? `Incl. ${overview.expiring} expiring soon · ${overview.total} on register` : `${overview.total} on register`} />
+            <StatCard
+              label="Expiring soon"
+              value={overview.expiring}
+              icon={CalendarClock}
+              tone={overview.expiring > 0 ? "warning" : "default"}
+              hint={`Within ${overview.soonDays} days`}
+            />
+            <StatCard label="Expired" value={overview.expired} icon={Users} tone={overview.expired > 0 ? "danger" : "default"} hint="Not renewed yet" />
+            <StatCard label="New this month" value={overview.newThisMonth} icon={UserPlus} hint="Joined since the 1st" />
+          </div>
+
+          <div className="grid gap-6 xl:grid-cols-2">
+            <Card>
+              <CardHeader
+                title="Renewals to chase"
+                description="Expiring soon or lapsed in the last 14 days"
+                action={
+                  <Link href="/members?status=expiring" className="text-[13px] font-medium text-lime hover:underline">
+                    View all
+                  </Link>
+                }
+              />
+              {overview.expiringList.length === 0 ? (
+                <EmptyState icon={CalendarClock} title="No renewals due" description="Members close to expiry will show up here." className="py-10" />
+              ) : (
+                <MemberList members={overview.expiringList} gymName={ctx.gym.name} showReminder />
+              )}
+            </Card>
+            <Card>
+              <CardHeader
+                title="Recently added"
+                action={
+                  <Link href="/members" className="text-[13px] font-medium text-lime hover:underline">
+                    All members
+                  </Link>
+                }
+              />
+              {overview.recentMembers.length === 0 ? (
+                <EmptyState
+                  icon={Users}
+                  title="No members yet"
+                  description="Add members or import your register to get started."
+                  action={
+                    hasPermission(ctx, "members.manage") && (
+                      <Link href="/members/import" className="text-[13px] font-medium text-lime hover:underline">
+                        Import from Excel
+                      </Link>
+                    )
+                  }
+                  className="py-10"
+                />
+              ) : (
+                <MemberList members={overview.recentMembers} gymName={ctx.gym.name} />
+              )}
+            </Card>
+          </div>
+        </>
+      )}
     </>
+  );
+}
+
+function MemberList({ members, gymName, showReminder }: { members: DashboardMember[]; gymName: string; showReminder?: boolean }) {
+  return (
+    <ul className="divide-y divide-line">
+      {members.map((m) => (
+        <li key={m.id} className="flex items-center gap-3 px-5 py-3">
+          <Avatar name={m.fullName} size={34} />
+          <Link href={`/members/${m.id}`} className="min-w-0 flex-1 hover:text-lime">
+            <div className="truncate text-sm font-medium">{m.fullName}</div>
+            <div className="truncate text-[12px] text-ink-subtle">
+              {m.planName ? `${m.planName} · ` : ""}
+              {m.validUntil ? `until ${formatDate(m.validUntil)}` : `joined ${formatDate(m.joinedOn)}`}
+            </div>
+          </Link>
+          <StandingBadge standing={m.standing} />
+          {showReminder && (
+            <WhatsAppButton phone={m.phone} compact label={`Remind ${m.fullName}`} message={renewalReminder(m.fullName, gymName, m.validUntil)} />
+          )}
+        </li>
+      ))}
+    </ul>
   );
 }

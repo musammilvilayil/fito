@@ -22,6 +22,7 @@ export function RegisterForm({ needsCode }: { needsCode: boolean }) {
 
   return (
     <form
+      method="post"
       noValidate
       className="space-y-4"
       onSubmit={(e) => {
