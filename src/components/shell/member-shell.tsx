@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Check, Dumbbell, Home, KeyRound, LineChart, LogOut, UserRound, type LucideIcon } from "lucide-react";
+import { Bell, Check, Dumbbell, Home, KeyRound, LineChart, LogOut, Sparkles, UserRound, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
@@ -15,6 +15,7 @@ const TABS: { href: string; label: string; icon: LucideIcon; exact?: boolean }[]
   { href: "/me", label: "Home", icon: Home, exact: true },
   { href: "/me/workouts", label: "Workout", icon: Dumbbell },
   { href: "/me/progress", label: "Progress", icon: LineChart },
+  { href: "/me/assistant", label: "Ask", icon: Sparkles },
   { href: "/me/profile", label: "Profile", icon: UserRound },
 ];
 
@@ -124,7 +125,7 @@ export function MemberShell({
         aria-label="Member tabs"
         className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
       >
-        <ul className="mx-auto grid max-w-md grid-cols-4">
+        <ul className="mx-auto grid max-w-md grid-cols-5">
           {TABS.map((t) => {
             const active = isActive(t);
             return (

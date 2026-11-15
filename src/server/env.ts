@@ -9,6 +9,11 @@ const schema = z.object({
   ANTHROPIC_API_KEY: z.string().optional(),
   AI_MODEL: z.string().default("claude-opus-5-5"),
   AI_MONTHLY_LIMIT_DEFAULT: z.coerce.number().int().positive().default(100),
+  /** In-app assistant. `fake` is a scripted stand-in for automated tests only. */
+  ASSISTANT_PROVIDER: z.enum(["anthropic", "fake"]).default("anthropic"),
+  ASSISTANT_MODEL: z.string().optional(),
+  ASSISTANT_EFFORT: z.enum(["low", "medium", "high"]).default("low"),
+  ASSISTANT_MONTHLY_MESSAGES_DEFAULT: z.coerce.number().int().positive().default(300),
   EXERCISE_MEDIA_BASE_URL: z
     .string()
     .url()

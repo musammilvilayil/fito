@@ -124,6 +124,8 @@ export type GymSettings = {
   sessionMinutes?: number;
   /** Monthly cap on AI workout generations (cost control). */
   aiMonthlyLimit?: number;
+  /** In-app AI assistant: who can use it and how many messages each person may send a month. */
+  assistant?: { members: boolean; staff: boolean; monthlyMessagesPerUser: number };
   /** Equipment the gym has; AI and templates only use matching exercises. */
   availableEquipment?: string[];
   openingHours?: string | null;
@@ -557,6 +559,8 @@ export const aiGenerations = pgTable(
       .references(() => gyms.id, { onDelete: "cascade" }),
     memberId: uuid("member_id").references(() => members.id, { onDelete: "set null" }),
     requestedByStaffId: uuid("requested_by_staff_id").references(() => gymStaff.id, { onDelete: "set null" }),
+    /** workout_plan | assistant */
+    feature: text("feature").notNull().default("workout_plan"),
     provider: text("provider").notNull(),
     model: text("model"),
     status: aiStatus("status").notNull(),
@@ -570,7 +574,7 @@ export const aiGenerations = pgTable(
     latencyMs: integer("latency_ms"),
     createdAt: createdAt(),
   },
-  (t) => [index("ai_generations_gym_created_idx").on(t.gymId, t.createdAt)],
+  (t) => [index("ai_generations_gym_created_idx").on(t.gymId, t.createdAt), index("ai_generations_feature_idx").on(t.gymId, t.feature, t.createdAt)],
 );
 
 /* --------------------------------------------------------- notifications */
@@ -608,4 +612,96 @@ export const auditLogs = pgTable(
     createdAt: createdAt(),
   },
   (t) => [index("audit_logs_gym_created_idx").on(t.gymId, t.createdAt)],
+);
+
+/* ------------------------------------------------------------ assistant */
+
+/**
+ * In-app AI assistant conversations. Private to the user who started them
+ * (RLS: gym_id AND user_id). Messages are stored exactly as sent to and
+ * received from the model API and replayed append-only.
+ */
+export const assistantThreads = pgTable(
+  "assistant_threads",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    gymId: uuid("gym_id")
+      .notNull()
+      .references(() => gyms.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    persona: text("persona").notNull(),
+    /** Hash of model + system prompt + tool set. A change starts a new thread. */
+    configHash: text("config_hash").notNull(),
+    title: text("title").notNull(),
+    /** Gym-local date of the last context message sent into the thread. */
+    contextDate: date("context_date", { mode: "string" }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index("assistant_threads_user_idx").on(t.gymId, t.userId, t.updatedAt)],
+);
+
+export const assistantMessages = pgTable(
+  "assistant_messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    gymId: uuid("gym_id")
+      .notNull()
+      .references(() => gyms.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    threadId: uuid("thread_id")
+      .notNull()
+      .references(() => assistantThreads.id, { onDelete: "cascade" }),
+    seq: integer("seq").notNull(),
+    /** API role: user | assistant | system (mid-conversation context). */
+    role: text("role").notNull(),
+    /** message (the person's text) | reply | tool_results | context */
+    kind: text("kind").notNull(),
+    /** Content exactly as exchanged with the model API. */
+    content: jsonb("content").notNull(),
+    /** Plain text for display (the person's message or the reply text). */
+    text: text("text"),
+    toolNames: text("tool_names").array().notNull().default(sql`'{}'::text[]`),
+    model: text("model"),
+    inputTokens: integer("input_tokens").notNull().default(0),
+    outputTokens: integer("output_tokens").notNull().default(0),
+    cacheReadTokens: integer("cache_read_tokens").notNull().default(0),
+    costMicroUsd: bigint("cost_micro_usd", { mode: "number" }).notNull().default(0),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("assistant_messages_seq_key").on(t.threadId, t.seq),
+    index("assistant_messages_user_month_idx").on(t.gymId, t.userId, t.createdAt),
+  ],
+);
+
+export const assistantActionStatus = pgEnum("assistant_action_status", ["pending", "confirmed", "cancelled", "failed"]);
+
+/** Changes the assistant proposes. Nothing happens until the person confirms. */
+export const assistantActions = pgTable(
+  "assistant_actions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    gymId: uuid("gym_id")
+      .notNull()
+      .references(() => gyms.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    threadId: uuid("thread_id")
+      .notNull()
+      .references(() => assistantThreads.id, { onDelete: "cascade" }),
+    type: text("type").notNull(),
+    payload: jsonb("payload").notNull(),
+    summary: text("summary").notNull(),
+    status: assistantActionStatus("status").notNull().default("pending"),
+    result: jsonb("result"),
+    createdAt: createdAt(),
+    decidedAt: timestamp("decided_at", { withTimezone: true }),
+  },
+  (t) => [index("assistant_actions_thread_idx").on(t.threadId, t.createdAt)],
 );

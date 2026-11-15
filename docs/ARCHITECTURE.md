@@ -123,3 +123,41 @@ service checks `ctx.memberId === memberId` before allowing self-access, and
 RLS still limits them to their gym. Workout logs (`workout_logs`, one per
 member, plan, day and date) and progress entries (`progress_entries`) are
 written by the member or by staff who coach them.
+
+## AI assistant
+
+```
+browser ──POST /api/v1/assistant/chat──▶ runTurn (src/server/modules/assistant/service.ts)
+   ▲          (Server-Sent Events)            │ 1. checks: provider, gym on/off, rate limit, monthly quota
+   │                                          │ 2. loads the thread transcript (append-only)
+   └──── text deltas, tool status, ◀──────────┤ 3. model call (Claude, streaming) with role-filtered tools
+         proposed actions, done                │ 4. tool_use → validate input (Zod) → run tool with the
+                                               │    person's own GymContext (permissions + RLS)
+                                               │ 5. repeat up to 6 rounds; store the turn; log usage
+```
+
+* **No database access for the model.** Tools in `tools.ts` call the same
+  service functions the app uses, with the signed-in person's context. A
+  trainer's tool sees only their members; a member's tools see only
+  themselves. Tools a role can't use aren't offered, and calls to anything
+  else are refused.
+* **Writes need confirmation.** A tool that would change data returns a
+  proposal, stored in `assistant_actions`. The UI shows Confirm/Cancel, and
+  confirming runs the normal service (for example `addProgressEntry`) with
+  the person's permissions. The model is told the outcome on the next turn.
+* **Privacy.** `assistant_threads`, `assistant_messages` and
+  `assistant_actions` have row-level security on gym *and* user. Owners see
+  only usage totals (`ai_generations`, feature `assistant`), never content.
+  Tool calls are written to `audit_logs`.
+* **Transcript discipline.** Claude ties its reasoning blocks to the exact
+  system prompt, tools and earlier messages. So the system prompt per
+  persona is constant, tools come in a fixed order, and the transcript is
+  replayed exactly as stored and only appended to. Facts that change
+  (today's date, who is asking, outcomes of confirmed actions) are added as
+  mid-conversation system messages. If the model or the person's tool set
+  changes, a new thread starts.
+* **Cost control.** Effort `low` by default, prompt caching on the stable
+  prefix, a burst limit (20 messages per 10 minutes) and a per-person
+  monthly limit set by the owner.
+* **Provider boundary.** `model.ts` has the Claude implementation and a
+  scripted stand-in (`ASSISTANT_PROVIDER=fake`) for automated tests.

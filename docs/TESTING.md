@@ -1,6 +1,6 @@
 # Testing report
 
-_Last full run: 15 November 2026, on the `fito-web-mvp` branch._
+_Last full run: 15 November 2026, on the `fito-web-mvp` branch (after adding the AI assistant)._
 
 ## Results
 
@@ -8,8 +8,8 @@ _Last full run: 15 November 2026, on the `fito-web-mvp` branch._
 |---|---|---|
 | TypeScript (strict) | `npm run typecheck` | No errors |
 | Lint | `npm run lint` | No errors or warnings |
-| Unit + integration | `npm test` | **88 passed**, 1 skipped (10 files) |
-| End-to-end, desktop + Pixel 7 | `npm run test:e2e` | **22 passed**, 2 skipped (12 scenarios × 2 devices) |
+| Unit + integration | `npm test` | **96 passed**, 1 skipped (11 files) |
+| End-to-end, desktop + Pixel 7 | `npm run test:e2e` | **24 passed**, 2 skipped (13 scenarios × 2 devices) |
 | Production dependencies | `npm audit --omit=dev` | 0 known vulnerabilities |
 | All dependencies | `npm audit` | 12 moderate, all in dev-only tooling (drizzle-kit's bundled esbuild, typescript-eslint's minimatch). Not shipped to users. |
 
@@ -30,9 +30,11 @@ The skips are intentional:
   PostgreSQL database (`fito_test`) through the same `fito_app` role and
   row-level security as production. The database is reset before each test.
 * **End-to-end** (`tests/e2e`): Playwright drives a production build
-  (`npm run build && npm start`) in Chromium as a 1280px desktop and as a
+  (`npm run build && npm start`) in Chromium as a 1440px desktop and as a
   **Pixel 7** phone. Each scenario registers its own gym, so runs don't
-  share data.
+  share data. The server runs with `ASSISTANT_PROVIDER=fake`, a scripted
+  stand-in model, so assistant tests make no API calls. If you start the
+  server yourself for e2e, start it the same way.
 
 Run them locally:
 
@@ -64,7 +66,8 @@ npm run test:e2e -- --trace off
 | Workout plans: AI draft (fake provider), validation, retry, template fallback, quota, versioning, approval with acknowledged warnings, one active plan | `workouts` | 05 |
 | Member portal: home, QR, dues, workout logging, progress, receipts | `member-portal` | 07 |
 | Security through the HTTP API: no session, CSRF, member vs staff, member vs member, trainer scope, cross-gym and `X-Gym-Id`, Bearer tokens and logout, SQL injection and XSS input, login throttling, headers and cookies | `tenancy`, `auth` | 08 |
-| Layout: no page scrolls sideways on desktop or phone, with long real-world names | (none) | 06, plus checks in 04, 05 and 07 |
+| AI assistant: role-based tools, a model asking for tools outside the role, invalid tool input, exact append-only replay (thinking blocks, stable system prompt and tools), confirm-before-save, privacy between users and from the owner, refusals, provider failures, model or tool changes starting a new chat, monthly limits, usage logging | `assistant` | 09 |
+| Layout: no page scrolls sideways on desktop or phone, with long real-world names | (none) | 06, plus checks in 04, 05, 07 and 09 |
 
 ## Problems the tests caught (all fixed)
 
@@ -100,7 +103,7 @@ npm run test:e2e -- --trace off
 
 | Gap | Why | What to do |
 |---|---|---|
-| A live Claude API call | No API key in this environment. The AI path is tested with a fake provider (valid, invalid and failing responses) plus the template fallback. | Set `ANTHROPIC_API_KEY` on staging and create one AI draft. Check the draft details panel (model, tokens, time). |
+| A live Claude API call (workout drafts and the assistant) | No API key could be used in this environment. Both are tested with stand-in models (valid, invalid, refused and failing responses). | Set `ANTHROPIC_API_KEY` on staging. Run **Settings → AI → Test connection**, then one AI draft and a few assistant questions as a member and as the owner. |
 | Real phones and iOS Safari | Only Chromium device emulation is installed here. | Try check-in scanning and the member portal on one Android and one iPhone before the pilot. |
 | Screen-reader and automated accessibility audit | Not run. Components use labelled controls, focus rings and keyboard-reachable charts, but no axe/Lighthouse pass was done. | Run Lighthouse accessibility on the main pages. |
 | Load | Not run. | Pilot scale (one or two gyms of 200–400 members) is well within one small server or serverless deployment. Load-test before onboarding many gyms. |

@@ -124,6 +124,7 @@ async function aiCallsThisMonth(tx: Tx, ctx: GymContext) {
     .where(
       and(
         eq(aiGenerations.gymId, ctx.gym.id),
+        eq(aiGenerations.feature, "workout_plan"),
         eq(aiGenerations.provider, "anthropic"),
         sql`(${aiGenerations.createdAt} at time zone ${ctx.gym.timezone})::date >= ${monthStart}::date`,
       ),
@@ -145,7 +146,13 @@ export async function aiUsage(tx: Tx, ctx: GymContext) {
       costMicroUsd: sql<number>`coalesce(sum(${aiGenerations.costMicroUsd}), 0)::bigint`,
     })
     .from(aiGenerations)
-    .where(and(eq(aiGenerations.gymId, ctx.gym.id), sql`(${aiGenerations.createdAt} at time zone ${ctx.gym.timezone})::date >= ${monthStart}::date`));
+    .where(
+      and(
+        eq(aiGenerations.gymId, ctx.gym.id),
+        eq(aiGenerations.feature, "workout_plan"),
+        sql`(${aiGenerations.createdAt} at time zone ${ctx.gym.timezone})::date >= ${monthStart}::date`,
+      ),
+    );
   return {
     calls: r?.calls ?? 0,
     limit: aiMonthlyLimit(ctx),

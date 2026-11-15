@@ -51,6 +51,40 @@ _Status as of 15 November 2026 (branch `fito-web-mvp`)._
 * Profile: fitness profile, health screening, memberships, receipts and
   attendance history. In-app updates (for example, "your plan is ready").
 
+### AI assistant (members and staff)
+* **Member fitness assistant** (`/me/assistant`, the "Ask" tab). It answers
+  questions about:
+  * their membership, expiry and dues;
+  * their approved workout plan and today's session;
+  * how to do an exercise, and equipment alternatives;
+  * their workout history, visits and progress;
+  * general fitness and nutrition, with safety limits (no diagnosis or
+    supplement doses; pain or medical issues are referred to a trainer or
+    doctor);
+  * how to use FITO (QR check-in, renewals, payments, opening hours,
+    trainers).
+* **Admin assistant** (`/assistant`), answering from whatever the person's
+  role can see:
+  * today's attendance and estimated occupancy;
+  * revenue for a period and pending payments;
+  * expiring memberships and inactive members;
+  * workout plans waiting for approval, and trainers with their member
+    counts;
+  * member lookup.
+* **Security (brief §19.4):**
+  * The AI has no database access. It can only call backend tools, and
+    each tool runs with the signed-in person's own permissions and the
+    database's row-level security. That covers identity, role, gym and
+    resource checks. Branches don't exist in FITO yet; each gym is one
+    location.
+  * Tools are offered only if the person's role allows them.
+  * The one change it can make (saving a measurement) is proposed as a
+    card and only happens when the person taps **Confirm**.
+  * Every tool call is written to the audit log. Conversations are private
+    to each person; owners see usage totals only.
+* **Settings → AI:** connection status, a test button, monthly usage and
+  estimated cost, on/off for members and staff, and monthly limits.
+
 ### Platform
 * Next.js 16 + TypeScript, PostgreSQL with row-level security per gym,
   REST API `/api/v1` with Bearer tokens ready for the planned Expo app.
@@ -65,7 +99,7 @@ _Status as of 15 November 2026 (branch `fito-web-mvp`)._
 | **Online payments** (Razorpay or similar) | Staff record payments by hand; UPI goes to the gym's own account. | `src/server/modules/payments/gateway.ts`: interface for payment links and webhooks; schema columns and a unique index for gateway payment IDs. | A gateway account (the gym as merchant), keys and a webhook route. **Split settlements or marketplace payouts are not assumed**: they need separate approval from the provider. |
 | **SMS / WhatsApp Business API / email** | Invites, reset links and reminders go out as WhatsApp click-to-chat links sent by staff. In-app notifications only. | `src/server/modules/notifications/service.ts` is the single place to add delivery channels. | A provider account (for example, WhatsApp Business via a BSP, an SMS provider with DLT registration, or transactional email) and the owner's choice of channel. |
 | **Automatic reminders** | Renewal lists are on the dashboard; staff send reminders. | Not scheduled. | A daily job (Vercel Cron or a server cron) once a delivery channel exists. |
-| **Live AI** | Built and tested with a fake provider. No API key was available here, so **no live Claude call has been made yet**. Without a key, FITO uses templates and labels them. | `src/server/modules/ai/workout-ai.ts`: server-only key, anonymised prompt, structured output, validation, one retry, template fallback, per-gym monthly quota, token and cost logging. Requests opt in to Anthropic's **server-side refusal fallback** (beta): if the model declines, Anthropic retries on a fallback model in the same call, and FITO records the model that actually answered. | `ANTHROPIC_API_KEY`, then one test draft on staging. |
+| **Live AI** | Workout drafts and the assistant are built and tested with stand-in models. No API key was available here (this environment can't accept one for Anthropic's host), so **no live Claude call has been made yet**. Without a key, drafts use templates and the assistant is hidden. | `src/server/modules/ai/` (workout drafts) and `src/server/modules/assistant/` (chat). Both use a server-only key, validate every model output or tool input, log usage and cost per gym, and apply monthly limits. Requests opt in to Anthropic's **server-side refusal fallback** (beta): if the model declines, Anthropic retries on a fallback model in the same call, and FITO records the model that actually answered. | `ANTHROPIC_API_KEY` on the server, then **Settings → AI → Test connection** and one real draft and chat on staging. |
 | **Exercise media hosting** | Images load from the public free-exercise-db GitHub repository. | `EXERCISE_MEDIA_BASE_URL`. | Copy the images to your own storage/CDN for production. Licensed video can be added per exercise (gym exercises already accept a YouTube link). |
 | **Expo Android app** | Not started. | The REST API, Bearer tokens, `X-Gym-Id` and `/api/v1/me` are ready; shared Zod schemas live in `src/shared`. | The mobile app itself. |
 
@@ -81,6 +115,11 @@ _Status as of 15 November 2026 (branch `fito-web-mvp`)._
   tax lines or produce GST invoices. Confirm the requirement with your CA.
 * **Members can't pay online or book classes**; there is no class
   scheduling module.
+* **The assistant can't help with** online payments, supplement or shop
+  orders, inventory, class or session bookings, trainer shift timetables or
+  branches. Those modules don't exist yet, and it tells people so. There is
+  no public (signed-out) support chatbot: it would need abuse and cost
+  controls first.
 * **Member details** (name, phone) are changed by staff, not by members.
 * **Single language** (English). Malayalam is not added yet.
 * **Not yet checked on real phones**, iOS Safari, with a screen reader, or
@@ -94,7 +133,8 @@ _Status as of 15 November 2026 (branch `fito-web-mvp`)._
    backups. These are paid and need your approval (`DEPLOYMENT.md`).
 2. **Subdomain and DNS record.** You add one record at your DNS provider;
    nothing has been changed.
-3. **Anthropic API key**, and a monthly AI limit per gym.
+3. **Anthropic API key** on the server (it powers both workout drafts and the
+   assistant), plus the monthly limits in Settings → AI.
 4. **Payment gateway** and whether gyms will use their own merchant accounts.
 5. **Messaging channel** for reminders (WhatsApp Business, SMS or email).
 6. **Logo and tagline.**

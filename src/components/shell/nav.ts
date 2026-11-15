@@ -2,6 +2,7 @@ import type { Permission, Role } from "@/shared/permissions";
 
 export type NavKey =
   | "dashboard"
+  | "assistant"
   | "members"
   | "plans"
   | "payments"
@@ -17,6 +18,7 @@ type Rule = NavItem & { anyOf?: Permission[]; roles?: Role[] };
 
 const RULES: Rule[] = [
   { key: "dashboard", label: "Dashboard", href: "/dashboard", section: "main" },
+  { key: "assistant", label: "Assistant", href: "/assistant", section: "main" },
   { key: "members", label: "Members", href: "/members", section: "main", anyOf: ["members.view_all", "workouts.manage"] },
   { key: "attendance", label: "Attendance", href: "/attendance", section: "main", anyOf: ["attendance.record", "attendance.view"] },
   { key: "payments", label: "Payments", href: "/payments", section: "main", anyOf: ["payments.view"] },
@@ -28,7 +30,7 @@ const RULES: Rule[] = [
 ];
 
 /** Modules live in the app so far. Each phase adds its module here. */
-export const ENABLED_MODULES = new Set<NavKey>(["dashboard", "members", "attendance", "payments", "plans", "workouts", "exercises", "reports", "settings"]);
+export const ENABLED_MODULES = new Set<NavKey>(["dashboard", "assistant", "members", "attendance", "payments", "plans", "workouts", "exercises", "reports", "settings"]);
 
 export function navFor(permissions: ReadonlySet<Permission>): NavItem[] {
   return RULES.filter((r) => ENABLED_MODULES.has(r.key))

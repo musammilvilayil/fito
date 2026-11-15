@@ -35,9 +35,13 @@ list with comments.
 | `DATABASE_ADMIN_URL` | migrations only | Owner connection for `db:migrate` and `db:seed-exercises`. Do **not** set it on the web host. |
 | `APP_URL` | yes | `https://app.yourgym-domain.in` with no trailing slash. Used in invite/reset links and the CSRF check, and an `https` value makes the session cookie `Secure`. |
 | `SIGNUP_ACCESS_CODE` | recommended | When set, creating a gym at `/register` needs this code. Keep it set during the pilot. |
-| `ANTHROPIC_API_KEY` | optional | Server-only. Enables AI drafts. |
+| `ANTHROPIC_API_KEY` | optional | Server-only. Turns on AI workout drafts and the in-app assistant (see "Turning on AI" below). |
 | `AI_MODEL` | optional | Default `claude-opus-5-5`. |
-| `AI_MONTHLY_LIMIT_DEFAULT` | optional | AI drafts per gym per month (default 100). Owners can lower it per gym. |
+| `AI_MONTHLY_LIMIT_DEFAULT` | optional | AI workout drafts per gym per month (default 100). Owners change it in Settings → AI. |
+| `ASSISTANT_MODEL` | optional | Assistant model; defaults to `AI_MODEL`. |
+| `ASSISTANT_EFFORT` | optional | `low` (default: fastest and cheapest), `medium` or `high`. |
+| `ASSISTANT_MONTHLY_MESSAGES_DEFAULT` | optional | Messages per person per month (default 300). Owners change it in Settings → AI. |
+| `ASSISTANT_PROVIDER` | optional | Leave unset (`anthropic`). `fake` is a scripted model for automated tests only. |
 | `EXERCISE_MEDIA_BASE_URL` | optional | Exercise images. Defaults to the public-domain free-exercise-db on GitHub; point it at your own storage/CDN for production. |
 | `DATABASE_POOL_MAX` | optional | Connections per server instance. Keep 3 to 5 on serverless. |
 | `LOG_LEVEL` | optional | `info` in production. |
@@ -130,6 +134,24 @@ npm ci && npm run build
 4. Put Caddy or nginx in front for HTTPS. Caddy gets certificates
    automatically once DNS points at the server.
 
+## Turning on AI (workout drafts and the assistant)
+
+1. Create an API key in the Anthropic Console (console.anthropic.com), in an
+   organisation with billing set up. Paying for API usage is your decision.
+   FITO shows an estimated monthly cost in Settings → AI.
+2. Add it to the **server's** environment as `ANTHROPIC_API_KEY` (Vercel:
+   Project → Settings → Environment Variables, Production) and redeploy.
+   Never put it in code, in `NEXT_PUBLIC_*` variables or in the database.
+3. The server must be able to reach `api.anthropic.com` over HTTPS.
+4. Sign in as the owner and open **Settings → AI**. It should say
+   *Connected*. Press **Test connection**, which sends one tiny request.
+5. In the same card, choose whether members and staff can use the assistant
+   and set the monthly limits.
+
+The chat endpoint streams for up to 120 seconds
+(`src/app/api/v1/assistant/chat/route.ts`) and workout drafts up to 180
+seconds. Check your hosting plan allows that.
+
 ## Step 5: First sign-in
 
 1. Open `https://<your-subdomain>/register`, enter the
@@ -167,6 +189,9 @@ untouched.
   the QR, membership and plan.
 * Create an AI draft (or a template draft if no key) and approve it. The
   member sees it on **Workout**.
+* With a key set: Settings → AI shows *Connected*, **Test connection**
+  succeeds, and asking the **Assistant** "How many people checked in
+  today?" returns today's count.
 
 ## Backups and updates
 

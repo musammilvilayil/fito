@@ -13,6 +13,7 @@ import {
   Menu as MenuIcon,
   ScanLine,
   Settings,
+  Sparkles,
   Users,
   X,
   type LucideIcon,
@@ -30,6 +31,7 @@ import type { NavItem, NavKey } from "./nav";
 
 const ICONS: Record<NavKey, LucideIcon> = {
   dashboard: LayoutDashboard,
+  assistant: Sparkles,
   members: Users,
   attendance: ScanLine,
   payments: CreditCard,

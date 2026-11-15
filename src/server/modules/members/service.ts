@@ -23,7 +23,7 @@ export function soonDays(ctx: GymContext) {
 }
 
 /** Trainers see only members assigned to them; staff with members.view_all see everyone. */
-function visibilityFilter(ctx: GymContext) {
+export function visibilityFilter(ctx: GymContext) {
   if (hasPermission(ctx, "members.view_all")) return sql`true`;
   if (ctx.staffId && hasPermission(ctx, "workouts.manage")) return sql`m.assigned_trainer_id = ${ctx.staffId}`;
   return sql`false`;

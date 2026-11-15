@@ -25,6 +25,10 @@ PostgreSQL. Each gym's data is isolated by Postgres row-level security.
   exercise library.
 * **Members:** a mobile-first portal at `/me` with their membership, check-in
   QR, approved workout plan with logging, progress tracking and receipts.
+* **AI assistant:** "Ask FITO" for members and an admin assistant for staff.
+  It answers from the data the person's role can see, and changes nothing
+  without their confirmation. It needs `ANTHROPIC_API_KEY` on the server; see
+  [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md#turning-on-ai-workout-drafts-and-the-assistant).
 
 ## Requirements
 
@@ -69,7 +73,7 @@ Open http://localhost:3000 and choose **Set up your gym**.
 | `npm run typecheck` | Generates route types and runs TypeScript |
 | `npm run lint` | ESLint |
 | `npm test` | Unit + integration tests (needs the `fito_test` database) |
-| `npm run test:e2e` | Playwright tests (desktop + mobile) against a production build |
+| `npm run test:e2e` | Playwright tests (desktop + mobile) against a production build. If you start the server yourself, use `ASSISTANT_PROVIDER=fake npm run start` |
 | `npm run db:migrate` | Applies migrations using `DATABASE_ADMIN_URL` |
 | `npm run db:generate` | Generates a migration after editing `src/server/db/schema.ts` |
 | `npm run db:seed-exercises` | Loads or updates the global exercise library using `DATABASE_ADMIN_URL` |
