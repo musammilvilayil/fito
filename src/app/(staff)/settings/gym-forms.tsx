@@ -120,6 +120,7 @@ export function GymSettingsForm({ initial }: { initial: GymSettingsInput }) {
           <Field label="Opening hours" htmlFor="openingHours" error={fieldError(errors, "openingHours")}>
             <Input id="openingHours" placeholder="Mon–Sat 5:00–22:00, Sun 6:00–11:00" {...reg("openingHours")} />
           </Field>
+          <Checkbox label="Let people find this gym in the FITO app and join it themselves" {...reg("allowMemberSignup")} />
           <fieldset>
             <legend className="mb-2 text-[13px] font-medium text-ink-muted">Equipment available</legend>
             <p className="mb-3 text-[12px] text-ink-subtle">Workout suggestions only use exercises for equipment you tick.</p>

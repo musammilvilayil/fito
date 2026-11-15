@@ -129,6 +129,8 @@ export type GymSettings = {
   /** Equipment the gym has; AI and templates only use matching exercises. */
   availableEquipment?: string[];
   openingHours?: string | null;
+  /** People can find the gym in the app and join it themselves (default on). */
+  allowMemberSignup?: boolean;
   /** Sample data created by scripts/seed-demo.ts for demos. */
   demo?: boolean;
 };

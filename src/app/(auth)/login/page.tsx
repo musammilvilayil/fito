@@ -12,14 +12,22 @@ export default async function LoginPage() {
   return (
     <AuthCard
       title="Welcome back"
-      subtitle="Sign in with the email or phone number your gym has on file."
+      subtitle="Sign in with your mobile number or email."
       footer={
-        <>
-          Running a gym?{" "}
-          <Link href="/register" className="font-medium text-lime hover:underline">
-            Set up FITO for your gym
-          </Link>
-        </>
+        <div className="space-y-1.5">
+          <div>
+            New to FITO?{" "}
+            <Link href="/signup" className="font-medium text-lime hover:underline">
+              Create a member account
+            </Link>
+          </div>
+          <div>
+            Running a gym?{" "}
+            <Link href="/register" className="font-medium text-lime hover:underline">
+              Set up FITO for your gym
+            </Link>
+          </div>
+        </div>
       }
     >
       <LoginForm />

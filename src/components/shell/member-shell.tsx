@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Check, Dumbbell, Home, KeyRound, LineChart, LogOut, Sparkles, UserRound, type LucideIcon } from "lucide-react";
+import { Bell, Building2, Check, Dumbbell, Home, KeyRound, LineChart, LogOut, Sparkles, UserRound, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
@@ -87,6 +87,7 @@ export function MemberShell({
             }
           >
             <MenuLabel>{userName}</MenuLabel>
+            {gyms.length > 1 && <MenuLabel>Switch gym</MenuLabel>}
             {gyms.length > 1 &&
               gyms.map((g) => (
                 <MenuItem key={g.gymId} onSelect={() => g.gymId !== gymId && void switchGym(g.gymId)}>
@@ -95,7 +96,10 @@ export function MemberShell({
                   {g.gymId === gymId && <Check className="text-lime" />}
                 </MenuItem>
               ))}
-            {gyms.length > 1 && <MenuSeparator />}
+            <MenuItem onSelect={() => router.push("/join")}>
+              <Building2 /> Join another gym
+            </MenuItem>
+            <MenuSeparator />
             <MenuItem onSelect={() => router.push("/account")}>
               <KeyRound /> Account &amp; password
             </MenuItem>

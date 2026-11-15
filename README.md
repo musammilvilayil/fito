@@ -25,6 +25,11 @@ PostgreSQL. Each gym's data is isolated by Postgres row-level security.
   exercise library.
 * **Members:** a mobile-first portal at `/me` with their membership, check-in
   QR, approved workout plan with logging, progress tracking and receipts.
+  They can join through an invite link from the gym, or sign up themselves
+  (`/signup`), find their gym by name or city and join it. They can also
+  join more gyms and switch between them. Gyms can turn off app sign-ups in
+  Settings.
+* **Trainers** can also add members; those members are assigned to them.
 * **AI assistant:** "Ask FITO" for members and an admin assistant for staff.
   It answers from the data the person's role can see, and changes nothing
   without their confirmation. It needs `ANTHROPIC_API_KEY` on the server; see

@@ -85,6 +85,19 @@ _Status as of 15 November 2026 (branch `fito-web-mvp`)._
 * **Settings → AI:** connection status, a test button, monthly usage and
   estimated cost, on/off for members and staff, and monthly limits.
 
+### Sign-up and gyms
+* People can create a member account (`/signup`), find a gym by name or
+  city, and join it. They land on the register with no membership; the
+  front desk is notified and sells a plan.
+* They can join more gyms and switch between them from the account menu.
+  Each gym's records (memberships, payments, attendance) stay separate:
+  nothing moves between gyms.
+* An existing register entry is never linked by phone number alone, because
+  without SMS verification that would let someone take over another
+  person's membership. Those people use the gym's invite link instead.
+* Gyms can turn app sign-ups off (Settings → Operations).
+* Trainers can add members, who are assigned to them.
+
 ### Demo gym for sales
 * `npm run db:seed-demo` creates a demo gym with an owner, a trainer and 100
   fictional members, plus two months of realistic history.

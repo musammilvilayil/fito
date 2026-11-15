@@ -8,8 +8,8 @@ _Last full run: 15 November 2026, on the `fito-web-mvp` branch (after adding the
 |---|---|---|
 | TypeScript (strict) | `npm run typecheck` | No errors |
 | Lint | `npm run lint` | No errors or warnings |
-| Unit + integration | `npm test` | **102 passed**, 1 skipped (12 files) |
-| End-to-end, desktop + Pixel 7 | `npm run test:e2e` | **24 passed**, 2 skipped (13 scenarios × 2 devices) |
+| Unit + integration | `npm test` | **109 passed**, 1 skipped (14 files) |
+| End-to-end, desktop + Pixel 7 | `npm run test:e2e` | **26 passed**, 2 skipped (14 scenarios × 2 devices) |
 | Production dependencies | `npm audit --omit=dev` | 0 known vulnerabilities |
 | All dependencies | `npm audit` | 12 moderate, all in dev-only tooling (drizzle-kit's bundled esbuild, typescript-eslint's minimatch). Not shipped to users. |
 
@@ -55,6 +55,8 @@ npm run test:e2e -- --trace off
 | Area | Integration | End-to-end |
 |---|---|---|
 | Registration, login, sessions, invites, password reset | `auth` | 01 |
+| Member self sign-up, gym search (only gyms open to sign-ups, wildcard-safe), joining (no takeover of existing register entries), joining a second gym and switching | `self-signup` | 10 |
+| Trainers adding members (assigned to themselves; can invite only their own; no edit or deactivate) | `trainer-members` | (none) |
 | Gym isolation (RLS on every table, policies, no cross-gym reads/writes) | `tenancy` | 08 |
 | Roles and permissions (owner, manager, trainer, front desk, member) | `auth`, `members`, `workouts`, `member-portal` | 01, 05, 07, 08 |
 | Members: create, search, edit, deactivate, CSV import with dry run (Excel files share the import path but have no test of their own) | `members` | 02 |

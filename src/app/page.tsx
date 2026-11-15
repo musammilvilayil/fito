@@ -88,7 +88,7 @@ export default async function LandingPage() {
             </Button>
             {!session && (
               <Button asChild size="lg" variant="secondary">
-                <Link href="/login">I&apos;m a member or trainer</Link>
+                <Link href="/signup">Join your gym as a member</Link>
               </Button>
             )}
           </div>

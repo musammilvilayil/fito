@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession, homePathFor } from "@/server/auth/page";
 import { AuthCard } from "../auth-card";
@@ -15,9 +16,14 @@ export default async function WelcomePage() {
   return (
     <AuthCard
       title={`Hi ${session.user.fullName.split(" ")[0]}`}
-      subtitle="Your account isn't linked to a gym right now. Ask your gym to send you an invite link, then open it while signed in."
+      subtitle="Your account isn't linked to a gym yet. Find your gym and join it, or open the invite link your gym sent you."
     >
-      <SignOutButton />
+      <div className="space-y-3">
+        <Link href="/join" className="flex h-12 w-full items-center justify-center rounded-xl bg-lime text-[15px] font-medium text-lime-ink hover:bg-lime-hover">
+          Find your gym
+        </Link>
+        <SignOutButton />
+      </div>
     </AuthCard>
   );
 }

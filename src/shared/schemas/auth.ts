@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { optionalEmailField, optionalPhoneField, passwordField, requiredText } from "./common";
+import { optionalEmailField, optionalPhoneField, passwordField, phoneField, requiredText } from "./common";
 
 export const loginSchema = z.object({
   identifier: z.string().trim().min(1, "Enter your email or phone number"),
@@ -11,6 +11,18 @@ const contact = {
   email: optionalEmailField,
   phone: optionalPhoneField,
 };
+
+/** A member creating their own account (they choose a gym next). */
+export const memberSignupSchema = z.object({
+  fullName: requiredText("Your name", 120),
+  phone: phoneField,
+  email: optionalEmailField,
+  password: passwordField,
+});
+export type MemberSignupInput = z.input<typeof memberSignupSchema>;
+
+export const gymSearchQuery = z.object({ q: z.string().trim().max(60).optional() });
+export const joinGymSchema = z.object({ gymId: z.uuid() });
 
 export const registerSchema = z
   .object({

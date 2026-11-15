@@ -52,6 +52,8 @@ export const gymSettingsSchema = z.object({
   sessionMinutes: z.coerce.number().int().min(15).max(480),
   openingHours: optionalText(200),
   availableEquipment: z.array(z.enum(EQUIPMENT_OPTIONS)).default([]),
+  /** Let people find this gym in the app and join it themselves. */
+  allowMemberSignup: z.boolean().default(true),
 });
 export type GymSettingsInput = z.input<typeof gymSettingsSchema>;
 

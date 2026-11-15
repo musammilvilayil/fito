@@ -41,6 +41,7 @@ export default async function SettingsPage() {
             openingHours: gym.settings.openingHours ?? "",
             availableEquipment: (gym.settings.availableEquipment ??
               []) as never,
+            allowMemberSignup: gym.settings.allowMemberSignup !== false,
           }}
         />
       </div>
