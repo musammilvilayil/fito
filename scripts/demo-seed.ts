@@ -436,7 +436,12 @@ export async function seedDemo(opts: DemoOptions) {
     await q(`update workout_plans set created_at = $2, updated_at = $2, approved_at = $2 where id = $1`, [g.planId, ts]);
     await q(`update workout_plan_versions set created_at = $2 where plan_id = $1`, [g.planId, ts]);
   }
-  for (const p of pending) await generatePlan(trainer, { memberId: p.id!, mode: "template", instructions: null });
+  for (const p of pending) {
+    const g = await generatePlan(trainer, { memberId: p.id!, mode: "template", instructions: null });
+    const ts = at(addDays(today, -int(1, 3)), 18 * 60 + int(0, 180));
+    await q(`update workout_plans set created_at = $2, updated_at = $2 where id = $1`, [g.planId, ts]);
+    await q(`update workout_plan_versions set created_at = $2 where plan_id = $1`, [g.planId, ts]);
+  }
 
   // Workout logs on gym days after the plan was approved.
   const planRows = await q(
