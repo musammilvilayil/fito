@@ -270,7 +270,7 @@ function InviteDialog({
         <Field label="Full name" htmlFor="s-name" required error={fieldError(errors, "fullName")}>
           <Input id="s-name" {...reg("fullName")} aria-invalid={!!errors.fullName} />
         </Field>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Mobile number" htmlFor="s-phone" error={fieldError(errors, "phone")}>
             <Input id="s-phone" type="tel" placeholder="98470 12345" {...reg("phone")} aria-invalid={!!errors.phone} />
           </Field>
@@ -343,7 +343,7 @@ function EditDialog({
         <Field label="Full name" htmlFor="e-name" error={fieldError(errors, "fullName")}>
           <Input id="e-name" {...reg("fullName")} />
         </Field>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Mobile number" htmlFor="e-phone" error={fieldError(errors, "phone")}>
             <Input id="e-phone" type="tel" {...reg("phone")} />
           </Field>

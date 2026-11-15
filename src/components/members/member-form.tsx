@@ -59,7 +59,7 @@ export function MemberForm({
       >
         <Card>
           <CardHeader title="Personal details" />
-          <CardBody className="grid gap-4 sm:grid-cols-2">
+          <CardBody className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Full name" htmlFor="fullName" required error={fieldError(errors, "fullName")} className="sm:col-span-2">
               <Input id="fullName" autoComplete="off" {...reg("fullName")} aria-invalid={!!errors.fullName} />
             </Field>
@@ -90,7 +90,7 @@ export function MemberForm({
 
         <Card>
           <CardHeader title="Gym details" />
-          <CardBody className="grid gap-4 sm:grid-cols-2">
+          <CardBody className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Joined on" htmlFor="joinedOn" error={fieldError(errors, "joinedOn")} hint="Defaults to today">
               <Input id="joinedOn" type="date" {...reg("joinedOn")} />
             </Field>

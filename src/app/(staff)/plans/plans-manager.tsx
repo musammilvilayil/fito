@@ -104,7 +104,7 @@ export function PlansManager({ plans, canManage }: { plans: PlanRow[]; canManage
           />
         </Card>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {active.map((p) => (
             <PlanCard key={p.id} plan={p} canManage={canManage} onEdit={() => setEditing({ id: p.id, initial: toInput(p) })} onToggle={() => void toggleActive(p)} />
           ))}
@@ -114,7 +114,7 @@ export function PlansManager({ plans, canManage }: { plans: PlanRow[]; canManage
       {archived.length > 0 && (
         <>
           <h2 className="mb-3 mt-10 text-[13px] font-medium uppercase tracking-[0.1em] text-ink-subtle">Archived</h2>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {archived.map((p) => (
               <PlanCard key={p.id} plan={p} canManage={canManage} onEdit={() => setEditing({ id: p.id, initial: toInput(p) })} onToggle={() => void toggleActive(p)} />
             ))}

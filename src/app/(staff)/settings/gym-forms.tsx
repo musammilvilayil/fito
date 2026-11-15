@@ -25,7 +25,7 @@ export function GymProfileForm({ initial }: { initial: GymProfileInput }) {
       <CardBody>
         <form
           noValidate
-          className="grid gap-4 sm:grid-cols-2"
+          className="grid grid-cols-1 gap-4 sm:grid-cols-2"
           onSubmit={(e) => {
             e.preventDefault();
             void run(async (values) => {

@@ -14,6 +14,7 @@ import { attendanceSummary, listDay } from "@/server/modules/attendance/service"
 import { gymToday } from "@/server/modules/members/service";
 import { DayPicker } from "./day-picker";
 import { RowActions } from "./row-actions";
+import { sequential } from "@/server/db/tx";
 
 export const metadata: Metadata = { title: "Attendance" };
 
@@ -23,7 +24,7 @@ export default async function AttendancePage({ searchParams }: PageProps<"/atten
   const sp = await searchParams;
   const today = gymToday(ctx);
   const date = typeof sp.date === "string" && isISODate(sp.date) && sp.date <= today ? sp.date : today;
-  const [summary, rows] = await inGym(ctx, (tx) => Promise.all([attendanceSummary(tx, ctx), listDay(tx, ctx, date)]));
+  const [summary, rows] = await inGym(ctx, (tx) => sequential(() => attendanceSummary(tx, ctx), () => listDay(tx, ctx, date)));
   const canRecord = hasPermission(ctx, "attendance.record");
   const canDelete = hasPermission(ctx, "attendance.override");
   const tz = ctx.gym.timezone;

@@ -58,7 +58,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
         <StatCard label="Check-ins" value={r.attendance.total} icon={Activity} hint={`${r.attendance.uniqueMembers} different members`} />
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <Card>
           <CardHeader title="Revenue by month" description="Last 12 months, net of refunds" />
           <CardBody>

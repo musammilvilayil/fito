@@ -460,7 +460,7 @@ function SellDialog({
           });
         }}
       >
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Plan" htmlFor="s-plan" error={(errors.planId as { message?: string })?.message}>
             <Select id="s-plan" {...reg("planId")}>
               {plans.map((p) => (
@@ -482,7 +482,7 @@ function SellDialog({
         {plan && plan.admissionFeePaise > 0 && (
           <Checkbox label={`Charge admission fee (${formatINR(plan.admissionFeePaise)})`} {...reg("chargeAdmission")} />
         )}
-        <div className="grid gap-4 sm:grid-cols-[140px_1fr_1fr]">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-[140px_minmax(0,1fr)_minmax(0,1fr)]">
           <Field label="Discount" htmlFor="s-dtype">
             <Select id="s-dtype" {...reg("discountType")}>
               <option value="amount">₹ amount</option>
@@ -513,7 +513,7 @@ function SellDialog({
           <div className="space-y-4 rounded-xl border border-line p-4">
             <Checkbox label="Record payment now" {...reg("payNow")} />
             {payNow && (
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <Field label="Amount received (₹)" htmlFor="s-amt" error={payErr?.amount?.message} hint="Less than total = part payment">
                   <Input id="s-amt" inputMode="decimal" {...reg("payment.amount", { onChange: () => setAmountTouched(true) })} />
                 </Field>
@@ -593,7 +593,7 @@ function PaymentDialog({
           });
         }}
       >
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Amount (₹)" htmlFor="p-amt" error={err("amount")}>
             <Input id="p-amt" inputMode="decimal" {...reg("amount")} aria-invalid={!!err("amount")} />
           </Field>

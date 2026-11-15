@@ -17,7 +17,7 @@ export function RoleMatrix({
         title="What each role can do"
         description="Roles are fixed during the pilot. Change a person's role from the staff list above."
       />
-      <div className="grid gap-px border-b border-line bg-line sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-px border-b border-line bg-line sm:grid-cols-2 xl:grid-cols-4">
         {roles.map((r) => (
           <div key={r.role} className="bg-surface px-5 py-4">
             <div className="text-sm font-semibold">{r.label}</div>

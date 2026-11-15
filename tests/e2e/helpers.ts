@@ -54,3 +54,14 @@ export async function navigate(page: Page, label: string) {
   await openNav(page);
   await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: label, exact: true }).first().click();
 }
+
+/**
+ * Fails if the page scrolls sideways. Compares against the configured viewport
+ * width: on emulated phones the layout viewport (innerWidth) grows to fit
+ * overflowing content, so innerWidth alone would hide the bug.
+ */
+export async function expectNoSideScroll(page: Page) {
+  const device = page.viewportSize()!.width;
+  const scroll = await page.evaluate(() => document.documentElement.scrollWidth);
+  expect(scroll, `page is ${scroll - device}px wider than the ${device}px screen`).toBeLessThanOrEqual(device + 1);
+}

@@ -16,6 +16,7 @@ import { requireStaffContext } from "@/server/auth/page";
 import { getSetupStatus } from "@/server/modules/gyms/setup";
 import { getMemberOverview, type DashboardMember } from "@/server/modules/reports/dashboard";
 import { SetupChecklist } from "./setup-checklist";
+import { sequential } from "@/server/db/tx";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -30,12 +31,12 @@ export default async function DashboardPage() {
   const canSeeMoney = hasPermission(ctx, "payments.view");
   const canSeeAttendance = hasPermission(ctx, "attendance.view") || hasPermission(ctx, "attendance.record");
   const [setup, overview, money, visits] = await inGym(ctx, (tx) =>
-    Promise.all([
-      getSetupStatus(tx, ctx),
-      canSeeMembers ? getMemberOverview(tx, ctx) : Promise.resolve(null),
-      canSeeMoney ? paymentSummary(tx, ctx) : Promise.resolve(null),
-      canSeeAttendance ? attendanceSummary(tx, ctx) : Promise.resolve(null),
-    ]),
+    sequential(
+      () => getSetupStatus(tx, ctx),
+      () => (canSeeMembers ? getMemberOverview(tx, ctx) : Promise.resolve(null)),
+      () => (canSeeMoney ? paymentSummary(tx, ctx) : Promise.resolve(null)),
+      () => (canSeeAttendance ? attendanceSummary(tx, ctx) : Promise.resolve(null)),
+    ),
   );
   const firstName = ctx.user.fullName.split(" ")[0];
   const scopeLabel = hasPermission(ctx, "members.view_all") ? "" : " (your members)";
@@ -93,7 +94,7 @@ export default async function DashboardPage() {
             <StatCard label="New this month" value={overview.newThisMonth} icon={UserPlus} hint="Joined since the 1st" />
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-2">
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
             <Card>
               <CardHeader
                 title="Renewals to chase"

@@ -3,7 +3,7 @@ import path from "node:path";
 import { chromium, expect, test, type APIRequestContext } from "@playwright/test";
 import { Client } from "pg";
 import QRCode from "qrcode";
-import { registerGym, testPhone } from "./helpers";
+import { expectNoSideScroll, registerGym, testPhone } from "./helpers";
 
 const ADMIN_DB = process.env.E2E_DATABASE_ADMIN_URL ?? "postgres://postgres@localhost:5432/fito";
 
@@ -109,10 +109,11 @@ test("attendance and reports pages work on phones", async ({ page }, info) => {
   await registerGym(page, { gymName: `Phone Gym ${info.project.name} ${Date.now() % 100000}` });
   await page.goto("/attendance");
   await expect(page.getByText("No check-ins")).toBeVisible();
+  await expectNoSideScroll(page);
   await page.goto("/attendance/scan");
   await expect(page.getByRole("button", { name: "Start camera" })).toBeVisible();
+  await expectNoSideScroll(page);
   await page.goto("/reports");
   await expect(page.getByText("Members today")).toBeVisible();
-  const width = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
-  expect(width).toBeLessThanOrEqual(0); // no sideways scrolling
+  await expectNoSideScroll(page);
 });

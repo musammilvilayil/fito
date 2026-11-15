@@ -3,6 +3,7 @@ import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import type { GymContext } from "../../auth/context";
 import { gymStaff, members, notifications } from "../../db/schema";
 import type { Tx } from "../../db/tx";
+import { sequential } from "@/server/db/tx";
 
 type NewNotification = { userId: string; type: string; title: string; body?: string | null; link?: string | null };
 
@@ -32,7 +33,7 @@ async function memberInfo(tx: Tx, ctx: GymContext, memberId: string) {
 }
 
 export async function notifyTrainerAssigned(tx: Tx, ctx: GymContext, memberId: string, trainerStaffId: string) {
-  const [trainerUser, member] = await Promise.all([staffUserId(tx, ctx, trainerStaffId), memberInfo(tx, ctx, memberId)]);
+  const [trainerUser, member] = await sequential(() => staffUserId(tx, ctx, trainerStaffId), () => memberInfo(tx, ctx, memberId));
   if (!member) return;
   const [trainer] = await tx.select({ fullName: gymStaff.fullName }).from(gymStaff).where(eq(gymStaff.id, trainerStaffId));
   const items: NewNotification[] = [];

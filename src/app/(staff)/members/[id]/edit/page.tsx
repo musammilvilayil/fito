@@ -7,6 +7,7 @@ import { hasPermission, inGym } from "@/server/auth/context";
 import { requireStaffContext } from "@/server/auth/page";
 import { getMember } from "@/server/modules/members/service";
 import { listTrainers } from "@/server/modules/staff/service";
+import { sequential } from "@/server/db/tx";
 
 export const metadata: Metadata = { title: "Edit member" };
 
@@ -14,7 +15,7 @@ export default async function EditMemberPage({ params }: PageProps<"/members/[id
   const { id } = await params;
   const ctx = await requireStaffContext();
   if (!hasPermission(ctx, "members.manage")) return <AccessDenied />;
-  const [member, trainers] = await inGym(ctx, (tx) => Promise.all([getMember(tx, ctx, id), listTrainers(tx, ctx)]));
+  const [member, trainers] = await inGym(ctx, (tx) => sequential(() => getMember(tx, ctx, id), () => listTrainers(tx, ctx)));
   return (
     <div className="mx-auto max-w-3xl">
       <PageHeader title={`Edit ${member.fullName}`} description={member.memberCode} />

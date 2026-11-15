@@ -232,7 +232,7 @@ export function ImportWizard() {
               </Button>
             }
           />
-          <CardBody className="grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
+          <CardBody className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
             {IMPORT_COLUMNS.map((col) => (
               <label key={col.key} className="flex flex-col gap-1.5">
                 <span className="text-[13px] font-medium text-ink-muted">

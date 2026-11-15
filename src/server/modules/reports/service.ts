@@ -8,6 +8,7 @@ import { dailyCounts, hourlyCounts } from "../attendance/service";
 import { gymToday, soonDays } from "../members/service";
 import { currentMembershipJoin, standingExpr } from "../members/standing";
 import { duesTotal } from "../payments/service";
+import { sequential } from "@/server/db/tx";
 
 /** Days after the old end date within which a new membership still counts as a renewal. */
 export const RENEWAL_GRACE_DAYS = 30;
@@ -83,11 +84,11 @@ export async function getReport(tx: Tx, ctx: GymContext, range: { from?: ISODate
   ).rows as { total: number; unique_members: number }[];
 
   const span = diffDays(from, to);
-  const [daily, hourly, dues] = await Promise.all([
-    span <= 92 ? dailyCounts(tx, ctx, from, to) : Promise.resolve(null),
-    hourlyCounts(tx, ctx, from, to),
-    duesTotal(tx, ctx),
-  ]);
+  const [daily, hourly, dues] = await sequential(
+    () => (span <= 92 ? dailyCounts(tx, ctx, from, to) : Promise.resolve(null)),
+    () => hourlyCounts(tx, ctx, from, to),
+    () => duesTotal(tx, ctx),
+  );
 
   return {
     from,

@@ -2,7 +2,7 @@ import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTML
 import { cn } from "@/lib/cn";
 
 const control =
-  "w-full rounded-[10px] border border-line bg-raised px-3 text-sm text-ink placeholder:text-ink-subtle transition-colors " +
+  "w-full min-w-0 rounded-[10px] border border-line bg-raised px-3 text-sm text-ink placeholder:text-ink-subtle transition-colors " +
   "hover:border-line-strong focus:border-lime/70 focus:outline-none focus:ring-2 focus:ring-lime/20 " +
   "disabled:opacity-60 aria-[invalid=true]:border-danger/70 aria-[invalid=true]:focus:ring-danger/20";
 

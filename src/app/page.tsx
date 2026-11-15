@@ -96,7 +96,7 @@ export default async function LandingPage() {
       </section>
 
       <section className="border-y border-line bg-surface/40">
-        <div className="mx-auto grid max-w-6xl gap-px bg-line sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mx-auto grid grid-cols-1 max-w-6xl gap-px bg-line sm:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map((f) => (
             <div key={f.title} className="bg-canvas px-6 py-8 sm:px-8">
               <f.icon className="size-5 text-lime" aria-hidden />
@@ -107,7 +107,7 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-6xl gap-10 px-5 py-16 sm:px-8 lg:grid-cols-2 lg:py-24">
+      <section className="mx-auto grid grid-cols-1 max-w-6xl gap-10 px-5 py-16 sm:px-8 lg:grid-cols-2 lg:py-24">
         <div>
           <Dumbbell className="size-6 text-lime" aria-hidden />
           <h2 className="mt-4 text-[28px] font-semibold tracking-tight">Technology that supports trainers, not replaces them</h2>

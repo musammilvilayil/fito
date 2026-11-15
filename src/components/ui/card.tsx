@@ -2,7 +2,7 @@ import type { HTMLAttributes, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("rounded-[var(--radius-card)] border border-line bg-surface", className)} {...props} />;
+  return <div className={cn("min-w-0 rounded-[var(--radius-card)] border border-line bg-surface", className)} {...props} />;
 }
 
 export function CardHeader({

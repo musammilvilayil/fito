@@ -191,7 +191,7 @@ export function Scanner({ canOverride }: { canOverride: boolean }) {
   const canOverrideThis = outcome?.kind === "error" && canOverride && outcome.code.startsWith("not_allowed_") && outcome.code !== "not_allowed_inactive";
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
       {/* Phones: camera, then search by name, then the rest. Desktop: two columns. */}
       <div className="min-w-0 space-y-6 lg:col-start-1 lg:row-start-1">
         <Card className="overflow-hidden">

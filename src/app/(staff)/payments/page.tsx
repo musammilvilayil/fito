@@ -106,7 +106,7 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/payment
             methods={PAYMENT_METHODS.map((m) => ({ value: m, label: METHOD_LABELS[m] }))}
           />
 
-          <div className="mb-6 grid gap-6 xl:grid-cols-[1fr_320px]">
+          <div className="mb-6 grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
             <Card>
               <CardHeader
                 title="Daily collections"

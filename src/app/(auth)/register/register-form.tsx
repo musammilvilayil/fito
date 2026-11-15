@@ -34,7 +34,7 @@ export function RegisterForm({ needsCode }: { needsCode: boolean }) {
         });
       }}
     >
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Gym name" htmlFor="gymName" required error={fieldError(errors, "gymName")}>
           <Input id="gymName" placeholder="Iron Paradise Fitness" aria-invalid={!!errors.gymName} {...reg("gymName")} />
         </Field>

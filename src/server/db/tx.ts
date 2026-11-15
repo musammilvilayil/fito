@@ -31,3 +31,15 @@ export async function setGymScope(tx: Tx, gymId: string) {
 export async function setUserScope(tx: Tx, userId: string) {
   await tx.execute(sql`select set_config('app.user_id', ${userId}, true)`);
 }
+
+/**
+ * Runs tasks one after another and returns their results like Promise.all.
+ * A transaction is one connection, which runs one query at a time, so
+ * Promise.all over the same `tx` gains nothing; pg deprecates it and pg 9
+ * will reject it.
+ */
+export async function sequential<T extends readonly unknown[]>(...tasks: { [K in keyof T]: () => Promise<T[K]> }): Promise<T> {
+  const results: unknown[] = [];
+  for (const task of tasks) results.push(await task());
+  return results as unknown as T;
+}
