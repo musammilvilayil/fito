@@ -77,6 +77,37 @@ Open http://localhost:3000 and choose **Set up your gym**.
 | `npm run db:migrate` | Applies migrations using `DATABASE_ADMIN_URL` |
 | `npm run db:generate` | Generates a migration after editing `src/server/db/schema.ts` |
 | `npm run db:seed-exercises` | Loads or updates the global exercise library using `DATABASE_ADMIN_URL` |
+| `npm run db:seed-demo` | Creates or refreshes the **demo gym** for sales demos (see below) |
+
+## Demo gym for sales demos
+
+```bash
+npm run db:seed-demo
+```
+
+This creates **FITO Demo Gym**, marked with a "Demo data" badge in the app. It has:
+* an owner and one trainer;
+* 100 fictional members;
+* about two months of history: memberships, renewals, payments with receipts,
+  dues, freezes, expiring and lapsed members, check-ins with morning and
+  evening peaks, trainer-approved workout plans, workout logs and weigh-ins.
+
+Dates are relative to the day you run it, so run it again before a demo. That
+replaces the old demo gym; gyms without the demo flag are never touched.
+
+Sign in with password `demo1234`:
+
+| Role | Login |
+|---|---|
+| Owner | `demo.owner@example.com` |
+| Trainer | `demo.trainer@example.com` |
+| Member | `demo.member@example.com` (member app) |
+
+Options: `npm run db:seed-demo -- --name "Your Gym Name" --owner "Owner Name" --password "a-long-password"`.
+Use a separate demo deployment rather than your live one. On an `https`
+`APP_URL` the command refuses unless you add `--confirm`. Names and numbers
+are invented, but a `+91 90000 xxxxx` number could still belong to someone,
+so don't send WhatsApp messages from the demo gym.
 
 ## Environment variables
 

@@ -8,7 +8,7 @@ _Last full run: 15 November 2026, on the `fito-web-mvp` branch (after adding the
 |---|---|---|
 | TypeScript (strict) | `npm run typecheck` | No errors |
 | Lint | `npm run lint` | No errors or warnings |
-| Unit + integration | `npm test` | **96 passed**, 1 skipped (11 files) |
+| Unit + integration | `npm test` | **102 passed**, 1 skipped (12 files) |
 | End-to-end, desktop + Pixel 7 | `npm run test:e2e` | **24 passed**, 2 skipped (13 scenarios × 2 devices) |
 | Production dependencies | `npm audit --omit=dev` | 0 known vulnerabilities |
 | All dependencies | `npm audit` | 12 moderate, all in dev-only tooling (drizzle-kit's bundled esbuild, typescript-eslint's minimatch). Not shipped to users. |
@@ -66,6 +66,7 @@ npm run test:e2e -- --trace off
 | Workout plans: AI draft (fake provider), validation, retry, template fallback, quota, versioning, approval with acknowledged warnings, one active plan | `workouts` | 05 |
 | Member portal: home, QR, dues, workout logging, progress, receipts | `member-portal` | 07 |
 | Security through the HTTP API: no session, CSRF, member vs staff, member vs member, trainer scope, cross-gym and `X-Gym-Id`, Bearer tokens and logout, SQL injection and XSS input, login throttling, headers and cookies | `tenancy`, `auth` | 08 |
+| Demo seed: one flagged demo gym; realistic mix of statuses, dues and plans; check-ins only on valid membership days and never in the future; gap-free receipts per financial year; demo member login with a plan; re-run replaces it and other gyms are untouched | `demo-seed` | (none) |
 | AI assistant: role-based tools, a model asking for tools outside the role, invalid tool input, exact append-only replay (thinking blocks, stable system prompt and tools), confirm-before-save, privacy between users and from the owner, refusals, provider failures, model or tool changes starting a new chat, monthly limits, usage logging | `assistant` | 09 |
 | Layout: no page scrolls sideways on desktop or phone, with long real-world names | (none) | 06, plus checks in 04, 05, 07 and 09 |
 

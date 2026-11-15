@@ -85,6 +85,12 @@ _Status as of 15 November 2026 (branch `fito-web-mvp`)._
 * **Settings → AI:** connection status, a test button, monthly usage and
   estimated cost, on/off for members and staff, and monthly limits.
 
+### Demo gym for sales
+* `npm run db:seed-demo` creates a demo gym with an owner, a trainer and 100
+  fictional members, plus two months of realistic history.
+* It's marked with a "Demo data" badge, re-runnable, and never touches real
+  gyms (see README).
+
 ### Platform
 * Next.js 16 + TypeScript, PostgreSQL with row-level security per gym,
   REST API `/api/v1` with Bearer tokens ready for the planned Expo app.

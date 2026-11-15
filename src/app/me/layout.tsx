@@ -9,6 +9,7 @@ export default async function MemberLayout({ children }: { children: React.React
   const { unread } = await inGym(ctx, (tx) => listNotifications(tx, ctx, 1));
   return (
     <MemberShell
+      demo={ctx.gym.settings.demo === true}
       gymName={ctx.gym.name}
       gymId={ctx.gym.id}
       userName={ctx.user.fullName}

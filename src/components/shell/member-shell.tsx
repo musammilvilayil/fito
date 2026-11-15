@@ -10,6 +10,7 @@ import { Avatar } from "@/components/ui/page";
 import { Menu, MenuItem, MenuLabel, MenuSeparator } from "@/components/ui/menu";
 import { api, errorMessage } from "@/lib/api";
 import { cn } from "@/lib/cn";
+import { DemoBadge } from "./staff-shell";
 
 const TABS: { href: string; label: string; icon: LucideIcon; exact?: boolean }[] = [
   { href: "/me", label: "Home", icon: Home, exact: true },
@@ -22,6 +23,7 @@ const TABS: { href: string; label: string; icon: LucideIcon; exact?: boolean }[]
 export type MemberShellGym = { gymId: string; gymName: string; roleLabel: string };
 
 export function MemberShell({
+  demo = false,
   gymName,
   gymId,
   userName,
@@ -34,6 +36,7 @@ export function MemberShell({
   userName: string;
   unread: number;
   gyms: MemberShellGym[];
+  demo?: boolean;
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -62,6 +65,7 @@ export function MemberShell({
         <div className="mx-auto flex h-14 max-w-3xl items-center gap-3 px-4">
           <Logo href="/me" size="sm" />
           <span className="min-w-0 flex-1 truncate border-l border-line pl-3 text-[13px] text-ink-muted">{gymName}</span>
+          {demo && <DemoBadge />}
           <Link
             href="/me#updates"
             aria-label={unread ? `Updates (${unread} unread)` : "Updates"}

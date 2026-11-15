@@ -176,6 +176,19 @@ untouched.
 4. Set `APP_URL` to the `https://` subdomain and redeploy. Invite links
    generated before this point use the old URL; resend them.
 
+## A separate demo site (for showing gym owners)
+
+For sales demos, deploy a second copy of FITO with its **own database**, for
+example `demo.yourgym-domain.in`. That's one more DNS record, which you add.
+Then fill it with sample data:
+
+```bash
+DATABASE_URL="postgres://fito_app...@.../demo" DATABASE_ADMIN_URL="postgres://postgres...@.../demo" APP_URL="https://demo.yourgym-domain.in" npm run db:seed-demo -- --confirm --password "a-long-password"
+```
+
+Re-run it before a demo to move the dates forward. Keep demo data off the live
+site that real gyms use.
+
 ## Smoke test after each deploy
 
 * `/login` loads over HTTPS. Response headers include

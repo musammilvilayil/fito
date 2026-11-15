@@ -46,7 +46,17 @@ const SECTION_LABELS = { main: null, training: "Training", admin: "Manage" } as 
 
 export type ShellGym = { gymId: string; gymName: string; roleLabel: string };
 
+/** Small marker on gyms filled with sample data (scripts/seed-demo.ts). */
+export function DemoBadge({ className }: { className?: string }) {
+  return (
+    <span className={cn("shrink-0 rounded-full border border-warning/40 bg-warning/10 px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide text-warning", className)}>
+      Demo data
+    </span>
+  );
+}
+
 export function StaffShell({
+  demo = false,
   nav,
   gymName,
   gymId,
@@ -61,12 +71,14 @@ export function StaffShell({
   roleLabel: string;
   userName: string;
   gyms: ShellGym[];
+  demo?: boolean;
   children: ReactNode;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const sidebar = (
     <SidebarContent
+      demo={demo}
       nav={nav}
       gymName={gymName}
       gymId={gymId}
@@ -85,6 +97,7 @@ export function StaffShell({
 
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line bg-canvas/85 px-4 backdrop-blur lg:hidden">
         <Logo href="/dashboard" size="sm" />
+        {demo && <DemoBadge className="ml-auto mr-2" />}
         <button
           className="rounded-lg p-2 text-ink-muted hover:bg-raised hover:text-ink"
           onClick={() => setMobileOpen(true)}
@@ -116,6 +129,7 @@ export function StaffShell({
 }
 
 function SidebarContent({
+  demo,
   nav,
   gymName,
   gymId,
@@ -130,6 +144,7 @@ function SidebarContent({
   roleLabel: string;
   userName: string;
   gyms: ShellGym[];
+  demo: boolean;
   onNavigate: () => void;
 }) {
   const pathname = usePathname();
@@ -172,7 +187,10 @@ function SidebarContent({
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[13.5px] font-medium text-ink">{gymName}</span>
-                <span className="block text-[11.5px] text-ink-subtle">{roleLabel}</span>
+                <span className="flex items-center gap-1.5 text-[11.5px] text-ink-subtle">
+                  {roleLabel}
+                  {demo && <DemoBadge />}
+                </span>
               </span>
               <ChevronsUpDown className="size-4 shrink-0 text-ink-subtle" />
             </button>

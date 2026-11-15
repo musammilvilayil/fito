@@ -129,6 +129,8 @@ export type GymSettings = {
   /** Equipment the gym has; AI and templates only use matching exercises. */
   availableEquipment?: string[];
   openingHours?: string | null;
+  /** Sample data created by scripts/seed-demo.ts for demos. */
+  demo?: boolean;
 };
 
 export const gyms = pgTable(

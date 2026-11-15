@@ -2,7 +2,7 @@
   "name": "fito",
   "version": "0.1.0",
   "private": true,
-  "description": "FITO — fitness and gym management platform (web app + REST API)",
+  "description": "FITO \u2014 fitness and gym management platform (web app + REST API)",
   "engines": {
     "node": ">=20.9"
   },
@@ -18,7 +18,8 @@
     "db:setup-local": "bash scripts/setup-local-db.sh",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "db:seed-demo": "tsx --conditions=react-server scripts/seed-demo.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.8.0",

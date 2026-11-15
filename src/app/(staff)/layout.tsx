@@ -7,6 +7,7 @@ export default async function StaffLayout({ children }: { children: React.ReactN
   const ctx = await requireStaffContext();
   return (
     <StaffShell
+      demo={ctx.gym.settings.demo === true}
       nav={navFor(ctx.permissions)}
       gymName={ctx.gym.name}
       gymId={ctx.gym.id}
