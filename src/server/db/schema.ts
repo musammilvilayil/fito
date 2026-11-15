@@ -202,6 +202,7 @@ export type HealthScreening = {
   pregnant?: boolean;
   otherReason?: boolean;
   answeredAt?: string;
+  answeredBy?: "member" | "staff";
 };
 
 export const members = pgTable(

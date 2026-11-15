@@ -28,6 +28,7 @@ import { memberPlans } from "@/server/modules/workouts/service";
 import { ClipboardList, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { sequential } from "@/server/db/tx";
+import { listProgress, listWorkoutLogs } from "@/server/modules/workouts/tracking";
 
 export const metadata: Metadata = { title: "Member" };
 
@@ -38,7 +39,7 @@ export default async function MemberPage({ params }: PageProps<"/members/[id]">)
   const canAttendance = hasPermission(ctx, "attendance.view") || hasPermission(ctx, "attendance.record");
   const canQr = hasPermission(ctx, "members.manage") || hasPermission(ctx, "attendance.record");
   const canCoach = hasPermission(ctx, "workouts.manage");
-  const [member, trainers, billing, visits, plans] = await inGym(ctx, (tx) =>
+  const [member, trainers, billing, visits, plans, training] = await inGym(ctx, (tx) =>
     sequential(
       () => getMember(tx, ctx, id),
       () => listTrainers(tx, ctx),
@@ -52,6 +53,13 @@ export default async function MemberPage({ params }: PageProps<"/members/[id]">)
           : Promise.resolve(null),
       () => (canAttendance ? memberAttendance(tx, ctx, id, 8) : Promise.resolve(null)),
       () => (canCoach ? memberPlans(tx, ctx, id) : Promise.resolve(null)),
+      () =>
+        canCoach
+          ? sequential(
+              () => listWorkoutLogs(tx, ctx, id, 5),
+              () => listProgress(tx, ctx, id, 180),
+            ).catch(() => null)
+          : Promise.resolve(null),
     ),
   );
   const today = gymToday(ctx);
@@ -206,6 +214,48 @@ export default async function MemberPage({ params }: PageProps<"/members/[id]">)
                         <PlanSourceBadge source={p.source} />
                         <PlanStatusBadge status={p.status} />
                       </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          )}
+          {training && (
+            <Card>
+              <CardHeader
+                title="Training activity"
+                description={`${training[0].last7Days} workout${training[0].last7Days === 1 ? "" : "s"} logged in the last 7 days`}
+              />
+              {training[0].logs.length === 0 && training[1].length === 0 ? (
+                <p className="px-5 py-4 text-sm text-ink-muted">Nothing logged yet. Members log workouts and measurements in their app.</p>
+              ) : (
+                <ul className="divide-y divide-line text-sm">
+                  {training[1].length > 0 && (
+                    <li className="flex items-center justify-between gap-3 px-5 py-3">
+                      <span className="text-ink-muted">Latest measurement</span>
+                      <span className="tabular text-right">
+                        {[
+                          training[1].at(-1)!.weightKg !== null ? `${training[1].at(-1)!.weightKg} kg` : null,
+                          training[1].at(-1)!.bodyFatPct !== null ? `${training[1].at(-1)!.bodyFatPct}% fat` : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ") || "Measurements"}
+                        <span className="text-ink-subtle"> · {formatDate(training[1].at(-1)!.recordedOn)}</span>
+                      </span>
+                    </li>
+                  )}
+                  {training[0].logs.map((l) => (
+                    <li key={l.id} className="px-5 py-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="min-w-0 truncate">
+                          {formatDate(l.performedOn)} · <span className="text-ink-muted">{l.planName}</span>
+                        </span>
+                        <span className="tabular shrink-0 text-ink-muted">
+                          {l.completedExercises}/{l.totalExercises}
+                          {l.difficulty ? ` · effort ${l.difficulty}/5` : ""}
+                        </span>
+                      </div>
+                      {l.notes && <p className="mt-0.5 text-[13px] text-ink-subtle">“{l.notes}”</p>}
                     </li>
                   ))}
                 </ul>

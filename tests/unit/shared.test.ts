@@ -3,6 +3,7 @@ import { addDays, addMonths, diffDays, financialYear, isISODate, todayIn } from 
 import { formatINR, percentOf, rupeesToPaise } from "@/shared/money";
 import { can, ROLE_PERMISSIONS } from "@/shared/permissions";
 import { formatPhone, normalizePhone, whatsappLink } from "@/shared/phone";
+import { isForToday, suggestDay, weekdayIndex } from "@/shared/workout-schedule";
 
 describe("phone", () => {
   it.each([
@@ -111,5 +112,39 @@ describe("compact rupees", () => {
     expect(compactRupees(10000000)).toBe("1L");
     expect(compactRupees(1000000000)).toBe("1Cr");
     expect(compactRupees(-500000)).toBe("-5K");
+  });
+});
+
+describe("suggestDay", () => {
+  const days = [
+    { key: "a", weekday: null },
+    { key: "b", weekday: null },
+    { key: "c", weekday: null },
+  ];
+  const log = (dayKey: string, performedOn: string, planId = "p") => ({ dayKey, performedOn, planId });
+
+  it("uses weekdays when the plan is scheduled", () => {
+    // 2026-11-16 is a Monday.
+    expect(weekdayIndex("2026-11-16")).toBe(0);
+    expect(weekdayIndex("2026-11-22")).toBe(6);
+    const scheduled = [{ key: "mon", weekday: 0 }, { key: "wed", weekday: 2 }];
+    expect(suggestDay(scheduled, "2026-11-18", [], "p")?.key).toBe("wed");
+    // Thursday and Sunday are rest days: show the next scheduled session.
+    expect(suggestDay(scheduled, "2026-11-19", [], "p")?.key).toBe("mon");
+    expect(suggestDay(scheduled, "2026-11-22", [], "p")?.key).toBe("mon");
+    expect(suggestDay(scheduled, "2026-11-17", [], "p")?.key).toBe("wed");
+    expect(isForToday(scheduled[0]!, "2026-11-16")).toBe(true);
+    expect(isForToday(scheduled[0]!, "2026-11-17")).toBe(false);
+    expect(isForToday(days[0]!, "2026-11-17")).toBe(true);
+  });
+
+  it("rotates through days by the last log and keeps today's log", () => {
+    expect(suggestDay(days, "2026-11-18", [], "p")?.key).toBe("a");
+    expect(suggestDay(days, "2026-11-18", [log("a", "2026-11-16"), log("b", "2026-11-17")], "p")?.key).toBe("c");
+    expect(suggestDay(days, "2026-11-18", [log("c", "2026-11-17")], "p")?.key).toBe("a");
+    expect(suggestDay(days, "2026-11-18", [log("b", "2026-11-18"), log("a", "2026-11-17")], "p")?.key).toBe("b");
+    // Logs from an older plan don't count.
+    expect(suggestDay(days, "2026-11-18", [log("a", "2026-11-17", "old")], "p")?.key).toBe("a");
+    expect(suggestDay([], "2026-11-18", [], "p")).toBeNull();
   });
 });

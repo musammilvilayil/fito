@@ -100,7 +100,12 @@ export function errorResponse(err: unknown, requestId: string) {
 export function readToken(req: NextRequest): { token: string | undefined; viaCookie: boolean } {
   const bearer = /^Bearer\s+(.+)$/i.exec(req.headers.get("authorization") ?? "")?.[1];
   if (bearer) return { token: bearer.trim(), viaCookie: false };
-  return { token: req.cookies.get(SESSION_COOKIE)?.value, viaCookie: true };
+  const cookie = req.cookies.get(SESSION_COOKIE)?.value;
+  // Only a request that actually carries the session cookie has ambient
+  // authority worth protecting from CSRF. Native apps send neither a cookie
+  // nor an Origin header, and any browser cross-site POST carries an Origin,
+  // which is still checked below.
+  return { token: cookie, viaCookie: Boolean(cookie) };
 }
 
 /**

@@ -18,7 +18,7 @@ import { generateTemplatePlan } from "./template";
 
 /* ------------------------------------------------------------ profile */
 
-function assertCanCoach(ctx: GymContext, member: MemberDetail) {
+export function assertCanCoach(ctx: GymContext, member: MemberDetail) {
   if (ctx.memberId === member.id) return;
   if (!hasPermission(ctx, "workouts.manage") && !hasPermission(ctx, "members.manage")) throw forbidden();
   if (!hasPermission(ctx, "members.view_all") && member.assignedTrainerId !== ctx.staffId) {
@@ -54,11 +54,14 @@ export async function saveHealthScreening(tx: Tx, ctx: GymContext, memberId: str
   const member = await getMember(tx, ctx, memberId);
   assertCanCoach(ctx, member);
   const anyYes = Object.values(answers).some(Boolean);
+  // A member can't lift a pending clearance by re-answering "no" to everything;
+  // only staff who can approve plans clear it (recordClearance).
+  const stillPending = ctx.memberId === memberId && member.fitness.medicalClearanceRequired;
   await tx
     .update(members)
     .set({
-      healthScreening: { ...answers, answeredAt: new Date().toISOString() },
-      medicalClearanceRequired: anyYes,
+      healthScreening: { ...answers, answeredAt: new Date().toISOString(), answeredBy: ctx.memberId === memberId ? "member" : "staff" },
+      medicalClearanceRequired: anyYes || stillPending,
       medicalClearanceNote: anyYes ? null : member.fitness.medicalClearanceNote,
       updatedAt: new Date(),
     })
@@ -359,7 +362,7 @@ export async function generatePlan(
 
 /* ------------------------------------------------------------ plan CRUD */
 
-async function loadPlan(tx: Tx, ctx: GymContext, planId: string) {
+export async function loadPlan(tx: Tx, ctx: GymContext, planId: string) {
   const [plan] = await tx.select().from(workoutPlans).where(and(eq(workoutPlans.id, planId), eq(workoutPlans.gymId, ctx.gym.id)));
   if (!plan) throw notFound("Workout plan not found.");
   return plan;
@@ -374,7 +377,7 @@ async function loadEditable(tx: Tx, ctx: GymContext, planId: string) {
   return { plan, member };
 }
 
-async function currentContent(tx: Tx, planId: string, version: number): Promise<PlanContent> {
+export async function currentContent(tx: Tx, planId: string, version: number): Promise<PlanContent> {
   const [v] = await tx
     .select({ content: workoutPlanVersions.content })
     .from(workoutPlanVersions)

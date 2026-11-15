@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { LIMITATION_TAGS } from "../exercise-safety";
-import { optionalText, requiredText } from "./common";
+import { optionalIsoDate, optionalText, requiredText } from "./common";
 
 export const FITNESS_GOALS = ["weight_loss", "muscle_gain", "strength", "general_fitness", "endurance", "body_recomposition"] as const;
 export type FitnessGoal = (typeof FITNESS_GOALS)[number];
@@ -146,3 +146,66 @@ export function youtubeEmbed(url: string | null | undefined): string | null {
   const m = /(?:youtu\.be\/|v=|shorts\/|embed\/)([A-Za-z0-9_-]{11})/.exec(url);
   return m ? `https://www.youtube-nocookie.com/embed/${m[1]}` : null;
 }
+
+/* ---------------------------------------------------------- tracking */
+
+const optionalNumber = (min: number, max: number, label: string) =>
+  z
+    .union([z.number(), z.string()])
+    .optional()
+    .nullable()
+    .transform((v, ctx) => {
+      if (v === undefined || v === null || v === "") return null;
+      const n = typeof v === "number" ? v : Number(String(v).replace(",", "."));
+      if (!Number.isFinite(n) || n < min || n > max) {
+        ctx.addIssue({ code: "custom", message: `${label} should be between ${min} and ${max}` });
+        return z.NEVER;
+      }
+      return Math.round(n * 10) / 10;
+    });
+
+export const workoutLogEntrySchema = z.object({
+  exerciseId: z.string().min(1).max(120),
+  done: z.boolean(),
+  /** Heaviest weight used, if any. */
+  weightKg: optionalNumber(0, 500, "Weight"),
+});
+
+export const workoutLogSchema = z.object({
+  planId: z.uuid(),
+  dayKey: z.string().min(1).max(20),
+  /** Defaults to today in the gym's time zone; up to 7 days back. */
+  performedOn: optionalIsoDate,
+  entries: z.array(workoutLogEntrySchema).min(1).max(15),
+  /** 1 = very easy … 5 = very hard. */
+  difficulty: z.number().int().min(1).max(5).optional().nullable(),
+  notes: optionalText(500),
+});
+export type WorkoutLogInput = z.input<typeof workoutLogSchema>;
+
+export const MEASUREMENTS = [
+  { key: "waistCm", label: "Waist" },
+  { key: "chestCm", label: "Chest" },
+  { key: "hipsCm", label: "Hips" },
+  { key: "armCm", label: "Upper arm" },
+  { key: "thighCm", label: "Thigh" },
+] as const;
+export type MeasurementKey = (typeof MEASUREMENTS)[number]["key"];
+
+export const progressEntrySchema = z
+  .object({
+    recordedOn: optionalIsoDate,
+    weightKg: optionalNumber(20, 300, "Weight"),
+    bodyFatPct: optionalNumber(2, 70, "Body fat"),
+    waistCm: optionalNumber(30, 250, "Waist"),
+    chestCm: optionalNumber(30, 250, "Chest"),
+    hipsCm: optionalNumber(30, 250, "Hips"),
+    armCm: optionalNumber(10, 100, "Upper arm"),
+    thighCm: optionalNumber(20, 150, "Thigh"),
+    notes: optionalText(300),
+  })
+  .refine((v) => [v.weightKg, v.bodyFatPct, v.waistCm, v.chestCm, v.hipsCm, v.armCm, v.thighCm].some((n) => n !== null), {
+    message: "Enter at least one measurement",
+    path: ["weightKg"],
+  });
+export type ProgressEntryInput = z.input<typeof progressEntrySchema>;
