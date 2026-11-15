@@ -2,7 +2,7 @@
   "name": "fito",
   "version": "0.1.0",
   "private": true,
-  "description": "FITO \u2014 fitness and gym management platform (web app + REST API)",
+  "description": "FITO — fitness and gym management platform (web app + REST API)",
   "engines": {
     "node": ">=20.9"
   },
@@ -15,11 +15,12 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed-exercises": "tsx scripts/seed-exercises.ts",
-    "db:setup-local": "bash scripts/setup-local-db.sh",
+    "db:setup-local": "tsx scripts/setup-local.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "db:seed-demo": "tsx --conditions=react-server scripts/seed-demo.ts"
+    "db:seed-demo": "tsx --conditions=react-server scripts/seed-demo.ts",
+    "demo": "npm run db:setup-local && npm run db:seed-demo && npm run build && npm run start"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.8.0",

@@ -4,20 +4,13 @@
  *
  *   DATABASE_ADMIN_URL=postgres://... npm run db:migrate
  */
-import { drizzle } from "drizzle-orm/node-postgres";
-import { migrate } from "drizzle-orm/node-postgres/migrator";
-import { Pool } from "pg";
+import { applyMigrations } from "./lib/db-tasks";
 
 async function main() {
   const url = process.env.DATABASE_ADMIN_URL;
   if (!url) throw new Error("DATABASE_ADMIN_URL is not set");
-  const pool = new Pool({ connectionString: url, max: 1 });
-  try {
-    await migrate(drizzle(pool), { migrationsFolder: "db/migrations" });
-    console.log("Migrations applied.");
-  } finally {
-    await pool.end();
-  }
+  await applyMigrations(url);
+  console.log("Migrations applied.");
 }
 
 main().catch((err) => {

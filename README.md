@@ -32,37 +32,79 @@ PostgreSQL. Each gym's data is isolated by Postgres row-level security.
 
 ## Requirements
 
-* Node.js 20.9+ (22 recommended)
-* PostgreSQL 15+ (local install, Docker, or a hosted database)
+* Node.js 22 LTS (20.12 or newer works)
+* PostgreSQL 15 or newer, running on the same computer (or Docker, or a hosted database)
+* Git
 
-## Run locally
+## Run on your laptop (Windows, macOS or Linux)
+
+1. Install **Node.js 22 LTS** (nodejs.org), **PostgreSQL** (postgresql.org/download)
+   and **Git**.
+   * The PostgreSQL installer on Windows and macOS asks you to choose a password
+     for the `postgres` user. Remember it.
+   * On a Mac with Homebrew you can instead run
+     `brew install postgresql@16 && brew services start postgresql@16`. That
+     setup has no password.
+2. Get the code:
+
+```bash
+git clone https://github.com/musammilvilayil/fito.git
+```
+
+```bash
+cd fito
+```
+
+```bash
+git checkout fito-web-mvp
+```
+
+3. Install and start, with the demo gym:
 
 ```bash
 npm install
 ```
 
 ```bash
-npm run db:setup-local
+npm run demo
 ```
 
-This creates the `fito` and `fito_test` databases, applies migrations, loads
-the exercise library (820 public-domain exercises) and gives the `fito_app`
-role a local password. It expects a local superuser
-`postgres` on `localhost:5432`; set `PGHOST`, `PGPORT` or `PGUSER` if yours
-differs.
+`npm run demo` does four things:
+* It sets up the databases, asking for the PostgreSQL password if there is one.
+* It writes `.env.local`.
+* It creates the demo gym.
+* It builds the app and starts it.
+
+The first run takes a few minutes.
+
+4. Open http://localhost:3000 and sign in as `demo.owner@example.com` with
+   password `demo1234` (other logins are listed under "Demo gym for sales
+   demos").
+
+Next time, refresh the demo dates and start. The build is already there unless
+you've pulled new code; if you have, run `npm run build` first.
 
 ```bash
-cp .env.example .env.local
+npm run db:seed-demo
 ```
-
-Set `DATABASE_URL=postgres://fito_app:fito_app_local@localhost:5432/fito` in
-`.env.local`, then:
 
 ```bash
-npm run dev
+npm start
 ```
 
-Open http://localhost:3000 and choose **Set up your gym**.
+Stop the app with Ctrl+C in that window.
+
+**Showing it on a phone:** connect the phone to the same Wi-Fi and open the
+"Network" address that `npm start` prints (for example
+`http://192.168.1.5:3000`). If Windows asks whether Node.js may use the
+network, allow it for private networks. Phone browsers only allow the camera
+on https sites, so on a phone use name search for check-in. The laptop's own
+camera works at `localhost`.
+
+**For development**, use `npm run dev` instead of build and start. To set up
+the databases without the demo gym, run `npm run db:setup-local`. It's safe
+to re-run, and you can set `PGHOST`, `PGPORT`, `PGUSER` or `PGPASSWORD` if
+your PostgreSQL differs from the defaults.
 
 ## Scripts
 
@@ -78,6 +120,8 @@ Open http://localhost:3000 and choose **Set up your gym**.
 | `npm run db:generate` | Generates a migration after editing `src/server/db/schema.ts` |
 | `npm run db:seed-exercises` | Loads or updates the global exercise library using `DATABASE_ADMIN_URL` |
 | `npm run db:seed-demo` | Creates or refreshes the **demo gym** for sales demos (see below) |
+| `npm run db:setup-local` | Creates the local databases, applies migrations, loads exercises, writes `.env.local` |
+| `npm run demo` | Local setup, demo gym, build and start, in one command |
 
 ## Demo gym for sales demos
 
