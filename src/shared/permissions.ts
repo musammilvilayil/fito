@@ -12,6 +12,7 @@ export const PERMISSIONS = [
   "gym.manage",
   "staff.manage",
   "members.view_all",
+  "members.add",
   "members.manage",
   "members.assign_trainer",
   "plans.manage",
@@ -37,6 +38,7 @@ export const ROLE_PERMISSIONS: Record<Role, ReadonlySet<Permission>> = {
   manager: new Set(PERMISSIONS.filter((p) => p !== "gym.manage")),
   receptionist: new Set<Permission>([
     "members.view_all",
+    "members.add",
     "members.manage",
     "memberships.manage",
     "payments.record",
@@ -44,8 +46,10 @@ export const ROLE_PERMISSIONS: Record<Role, ReadonlySet<Permission>> = {
     "attendance.record",
     "attendance.view",
   ]),
-  // Trainers work with the members assigned to them.
+  // Trainers work with the members assigned to them. Members a trainer adds
+  // are assigned to that trainer.
   trainer: new Set<Permission>([
+    "members.add",
     "attendance.view",
     "workouts.manage",
     "workouts.approve",
@@ -78,7 +82,8 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   "gym.manage": "Edit gym profile and settings",
   "staff.manage": "Invite and manage staff",
   "members.view_all": "View all members",
-  "members.manage": "Add, edit and import members",
+  "members.add": "Add new members (a trainer's go to that trainer)",
+  "members.manage": "Edit, import and deactivate members",
   "members.assign_trainer": "Assign trainers to members",
   "plans.manage": "Create and edit membership plans",
   "memberships.manage": "Sell, renew and freeze memberships",

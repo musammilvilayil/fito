@@ -7,6 +7,6 @@ export const GET = route({ auth: "gym", query: memberListQuery }, async ({ ctx, 
   inGym(ctx, (tx) => listMembers(tx, ctx, query)),
 );
 
-export const POST = route({ auth: "gym", permission: "members.manage", body: memberCreateSchema }, async ({ ctx, body }) =>
+export const POST = route({ auth: "gym", body: memberCreateSchema }, async ({ ctx, body }) =>
   inGym(ctx, (tx) => createMember(tx, ctx, body)),
 );

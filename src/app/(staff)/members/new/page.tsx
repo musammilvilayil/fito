@@ -11,11 +11,18 @@ export const metadata: Metadata = { title: "Add member" };
 
 export default async function NewMemberPage() {
   const ctx = await requireStaffContext();
-  if (!hasPermission(ctx, "members.manage")) return <AccessDenied />;
+  if (!hasPermission(ctx, "members.manage") && !hasPermission(ctx, "members.add")) return <AccessDenied />;
   const trainers = await inGym(ctx, (tx) => listTrainers(tx, ctx));
   return (
     <div className="mx-auto max-w-3xl">
-      <PageHeader title="Add member" description="You can sell a membership right after saving." />
+      <PageHeader
+        title="Add member"
+        description={
+          hasPermission(ctx, "members.manage")
+            ? "You can sell a membership right after saving."
+            : "The member is assigned to you. The front desk sells the membership."
+        }
+      />
       <MemberForm
         mode="create"
         gymName={ctx.gym.name}

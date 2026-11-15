@@ -60,13 +60,15 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
         title={isTrainerView ? "My members" : "Members"}
         description={isTrainerView ? "Members assigned to you." : `${result.counts.all ?? 0} people on your register.`}
         actions={
-          canManage && (
+          (canManage || hasPermission(ctx, "members.add")) && (
             <>
-              <Button asChild variant="secondary">
-                <Link href="/members/import">
-                  <FileSpreadsheet /> Import
-                </Link>
-              </Button>
+              {canManage && (
+                <Button asChild variant="secondary">
+                  <Link href="/members/import">
+                    <FileSpreadsheet /> Import
+                  </Link>
+                </Button>
+              )}
               <Button asChild>
                 <Link href="/members/new">
                   <UserPlus /> Add member

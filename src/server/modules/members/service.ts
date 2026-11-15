@@ -190,8 +190,12 @@ export async function newMemberCode(tx: Tx, gymId: string) {
 }
 
 export async function createMember(tx: Tx, ctx: GymContext, input: z.output<typeof memberCreateSchema>) {
-  requirePermission(ctx, "members.manage");
-  if (input.assignedTrainerId) {
+  if (!hasPermission(ctx, "members.manage")) {
+    // Trainers can add members; the member is assigned to them so they can coach them.
+    requirePermission(ctx, "members.add");
+    if (!ctx.staffId) throw forbidden();
+    input = { ...input, assignedTrainerId: ctx.staffId };
+  } else if (input.assignedTrainerId) {
     requirePermission(ctx, "members.assign_trainer");
     await assertTrainerInGym(tx, ctx, input.assignedTrainerId);
   }
@@ -280,7 +284,8 @@ export async function assignTrainer(tx: Tx, ctx: GymContext, memberId: string, t
 
 /** New member-portal invite link (replaces any earlier one). */
 export async function createMemberInvite(tx: Tx, ctx: GymContext, memberId: string) {
-  requirePermission(ctx, "members.manage");
+  // Trainers can invite the members they added (getMember limits them to their own members).
+  if (!hasPermission(ctx, "members.manage")) requirePermission(ctx, "members.add");
   const member = await getMember(tx, ctx, memberId);
   if (member.hasAccount) throw conflict("This member already has an account.");
   if (!member.phone && !member.email) throw badRequest("Add a phone number or email first.");

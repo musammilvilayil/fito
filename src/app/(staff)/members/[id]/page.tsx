@@ -88,7 +88,7 @@ export default async function MemberPage({ params }: PageProps<"/members/[id]">)
           {(member.standing === "expiring" || member.standing === "expired") && (
             <WhatsAppButton phone={member.phone} label="Renewal reminder" message={renewalReminder(member.fullName, ctx.gym.name, member.current?.validUntil ?? null)} />
           )}
-          {canManage && (
+          {(canManage || hasPermission(ctx, "members.add")) && (
             <MemberActions
               memberId={member.id}
               fullName={member.fullName}
@@ -96,6 +96,7 @@ export default async function MemberPage({ params }: PageProps<"/members/[id]">)
               status={member.status}
               hasAccount={member.hasAccount}
               gymName={ctx.gym.name}
+              inviteOnly={!canManage}
             />
           )}
         </div>

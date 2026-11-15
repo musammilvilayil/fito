@@ -19,6 +19,7 @@ export function MemberActions({
   status,
   hasAccount,
   gymName,
+  inviteOnly = false,
 }: {
   memberId: string;
   fullName: string;
@@ -26,6 +27,8 @@ export function MemberActions({
   status: "active" | "inactive";
   hasAccount: boolean;
   gymName: string;
+  /** Trainers: only the app invite (no edit, reset or deactivate). */
+  inviteOnly?: boolean;
 }) {
   const router = useRouter();
   const [share, setShare] = useState<Share | null>(null);
@@ -74,6 +77,18 @@ export function MemberActions({
     } finally {
       setBusy(false);
     }
+  }
+
+  if (inviteOnly) {
+    if (hasAccount || !phone) return null;
+    return (
+      <>
+        <Button variant="secondary" onClick={() => void invite()}>
+          <Link2 /> Invite to FITO app
+        </Button>
+        {share && <ShareLinkDialog open onOpenChange={(o) => !o && setShare(null)} phone={phone} {...share} />}
+      </>
+    );
   }
 
   return (
