@@ -22,6 +22,12 @@ import { TrainerPicker } from "./trainer-picker";
 import { memberAttendance } from "@/server/modules/attendance/service";
 import { formatTime } from "@/shared/dates";
 import { QrCard } from "./qr-card";
+import { FitnessProfileCard } from "@/components/workouts/fitness-profile-card";
+import { PlanSourceBadge, PlanStatusBadge } from "@/components/workouts/plan-badges";
+import { memberPlans } from "@/server/modules/workouts/service";
+import { ClipboardList, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { sequential } from "@/server/db/tx";
 
 export const metadata: Metadata = { title: "Member" };
 
@@ -31,15 +37,22 @@ export default async function MemberPage({ params }: PageProps<"/members/[id]">)
   const canBilling = hasPermission(ctx, "payments.view") || hasPermission(ctx, "memberships.manage");
   const canAttendance = hasPermission(ctx, "attendance.view") || hasPermission(ctx, "attendance.record");
   const canQr = hasPermission(ctx, "members.manage") || hasPermission(ctx, "attendance.record");
-  const [member, trainers, billing, visits] = await inGym(ctx, (tx) =>
-    Promise.all([
-      getMember(tx, ctx, id),
-      listTrainers(tx, ctx),
-      canBilling
-        ? Promise.all([listMemberMemberships(tx, ctx, id), listMemberPayments(tx, ctx, id).catch(() => []), listPlans(tx, ctx)])
-        : Promise.resolve(null),
-      canAttendance ? memberAttendance(tx, ctx, id, 8) : Promise.resolve(null),
-    ]),
+  const canCoach = hasPermission(ctx, "workouts.manage");
+  const [member, trainers, billing, visits, plans] = await inGym(ctx, (tx) =>
+    sequential(
+      () => getMember(tx, ctx, id),
+      () => listTrainers(tx, ctx),
+      () =>
+        canBilling
+          ? sequential(
+              () => listMemberMemberships(tx, ctx, id),
+              () => listMemberPayments(tx, ctx, id).catch(() => []),
+              () => listPlans(tx, ctx),
+            )
+          : Promise.resolve(null),
+      () => (canAttendance ? memberAttendance(tx, ctx, id, 8) : Promise.resolve(null)),
+      () => (canCoach ? memberPlans(tx, ctx, id) : Promise.resolve(null)),
+    ),
   );
   const today = gymToday(ctx);
   const canManage = hasPermission(ctx, "members.manage");
@@ -80,13 +93,13 @@ export default async function MemberPage({ params }: PageProps<"/members/[id]">)
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div className="min-w-0 space-y-6">
           <Card>
             <CardHeader title="Membership" />
             <CardBody>
               {member.current ? (
-                <div className="grid gap-4 sm:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <Stat label="Plan" value={member.current.planName} />
                   <Stat label="Started" value={formatDate(member.current.startDate)} />
                   <Stat
@@ -159,9 +172,50 @@ export default async function MemberPage({ params }: PageProps<"/members/[id]">)
             />
           )}
 
+          {(canCoach || canManage) && (
+            <FitnessProfileCard
+              memberId={member.id}
+              fitness={member.fitness}
+              canEdit={canCoach || canManage}
+              canClear={hasPermission(ctx, "workouts.approve")}
+            />
+          )}
+
+          {plans && (
+            <Card>
+              <CardHeader
+                title="Workout plans"
+                action={
+                  <Button asChild size="sm" variant="secondary">
+                    <Link href={`/workouts/new?member=${member.id}`}>
+                      <Plus /> New plan
+                    </Link>
+                  </Button>
+                }
+              />
+              {plans.length === 0 ? (
+                <div className="flex items-center gap-3 px-5 py-5 text-sm text-ink-muted">
+                  <ClipboardList className="size-4 text-ink-subtle" /> No workout plan yet.
+                </div>
+              ) : (
+                <ul className="divide-y divide-line">
+                  {plans.map((p) => (
+                    <li key={p.id}>
+                      <Link href={`/workouts/${p.id}`} className="flex items-center gap-3 px-5 py-3 hover:bg-raised/60">
+                        <span className="min-w-0 flex-1 truncate text-sm font-medium">{p.name}</span>
+                        <PlanSourceBadge source={p.source} />
+                        <PlanStatusBadge status={p.status} />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          )}
+
           <Card>
             <CardHeader title="Details" />
-            <CardBody className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
+            <CardBody className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
               <Detail icon={Phone} label="Phone" value={member.phone ? formatPhone(member.phone) : null} />
               <Detail icon={Mail} label="Email" value={member.email} />
               <Detail icon={User} label="Gender" value={member.gender ? GENDER_LABELS[member.gender as keyof typeof GENDER_LABELS] : null} />

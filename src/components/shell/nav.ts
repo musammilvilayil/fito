@@ -28,7 +28,7 @@ const RULES: Rule[] = [
 ];
 
 /** Modules live in the app so far. Each phase adds its module here. */
-export const ENABLED_MODULES = new Set<NavKey>(["dashboard", "members", "attendance", "payments", "plans", "reports", "settings"]);
+export const ENABLED_MODULES = new Set<NavKey>(["dashboard", "members", "attendance", "payments", "plans", "workouts", "exercises", "reports", "settings"]);
 
 export function navFor(permissions: ReadonlySet<Permission>): NavItem[] {
   return RULES.filter((r) => ENABLED_MODULES.has(r.key))
