@@ -5,7 +5,7 @@ import { cn } from "@/lib/cn";
 
 const variants = {
   primary:
-    "bg-lime text-lime-ink hover:bg-lime-hover active:brightness-95 shadow-[0_0_0_1px_rgb(180_252_0/0.4),0_8px_24px_-12px_rgb(180_252_0/0.5)]",
+    "bg-lime text-lime-ink hover:bg-lime-hover active:brightness-95 shadow-[0_8px_20px_-10px_rgb(16_115_92/0.65)]",
   secondary: "bg-raised text-ink border border-line hover:bg-overlay hover:border-line-strong",
   ghost: "text-ink-muted hover:text-ink hover:bg-raised",
   outline: "border border-line-strong text-ink hover:bg-raised",

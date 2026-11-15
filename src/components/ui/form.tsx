@@ -2,7 +2,7 @@ import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTML
 import { cn } from "@/lib/cn";
 
 const control =
-  "w-full min-w-0 rounded-[10px] border border-line bg-raised px-3 text-sm text-ink placeholder:text-ink-subtle transition-colors " +
+  "w-full min-w-0 rounded-xl border border-line bg-white/80 px-3 text-sm text-ink placeholder:text-ink-subtle transition-colors " +
   "hover:border-line-strong focus:border-lime/70 focus:outline-none focus:ring-2 focus:ring-lime/20 " +
   "disabled:opacity-60 aria-[invalid=true]:border-danger/70 aria-[invalid=true]:focus:ring-danger/20";
 
@@ -20,7 +20,7 @@ export function Select({ className, children, ...props }: SelectHTMLAttributes<H
       className={cn(
         control,
         "h-10 appearance-none bg-[length:16px] bg-[right_10px_center] bg-no-repeat pr-9",
-        "bg-[url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a7b0bb' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")]",
+        "bg-[url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23576465' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")]",
         className,
       )}
       {...props}

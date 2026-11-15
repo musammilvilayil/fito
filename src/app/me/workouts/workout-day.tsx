@@ -71,6 +71,7 @@ export function WorkoutDay({
   const [openIdx, setOpenIdx] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const done = entries.filter((e) => e.done).length;
+  const heroImage = day.exercises.map((e) => exercises[e.exerciseId]?.images[0]).find(Boolean);
 
   const set = (i: number, patch: Partial<{ done: boolean; weight: string }>) =>
     setEntries((all) => all.map((e, j) => (j === i ? { ...e, ...patch } : e)));
@@ -135,18 +136,43 @@ export function WorkoutDay({
       )}
 
       <Card>
-        <div className="border-b border-line px-5 py-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h2 className="text-[17px] font-semibold">{day.title}</h2>
-              {day.focus && (
-                <p className="text-[13px] text-ink-muted">{day.focus}</p>
-              )}
+        <div className="border-b border-line">
+          {heroImage && (
+            <div className="relative h-40 overflow-hidden rounded-t-[var(--radius-card)] bg-white sm:h-48">
+              {/* eslint-disable-next-line @next/next/no-img-element -- public-domain exercise photo */}
+              <img src={heroImage} alt="" className="h-full w-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-transparent" aria-hidden />
+              <div className="absolute inset-x-5 bottom-3 text-white">
+                <h2 className="text-[20px] font-semibold leading-tight drop-shadow">{day.title}</h2>
+                {day.focus && <p className="text-[13px] text-white/90 drop-shadow">{day.focus}</p>}
+              </div>
             </div>
-            <span className="tabular inline-flex shrink-0 items-center gap-1 text-[12.5px] text-ink-subtle">
-              <Timer className="size-3.5" /> ~{estimateDayMinutes(day)} min
-            </span>
-          </div>
+          )}
+          <div className="px-5 py-4">
+            {!heroImage && (
+              <div className="mb-3">
+                <h2 className="text-[17px] font-semibold">{day.title}</h2>
+                {day.focus && <p className="text-[13px] text-ink-muted">{day.focus}</p>}
+              </div>
+            )}
+            <dl className="grid grid-cols-3 gap-2 text-center">
+              <div className="rounded-xl bg-raised px-2 py-2">
+                <dt className="text-[11.5px] text-ink-subtle">Duration</dt>
+                <dd className="tabular text-[15px] font-semibold">
+                  <Timer className="mr-1 inline size-3.5 text-lime" aria-hidden />~{estimateDayMinutes(day)} min
+                </dd>
+              </div>
+              <div className="rounded-xl bg-raised px-2 py-2">
+                <dt className="text-[11.5px] text-ink-subtle">Exercises</dt>
+                <dd className="tabular text-[15px] font-semibold">{day.exercises.length}</dd>
+              </div>
+              <div className="rounded-xl bg-raised px-2 py-2">
+                <dt className="text-[11.5px] text-ink-subtle">Done</dt>
+                <dd className="tabular text-[15px] font-semibold">
+                  {done}/{day.exercises.length}
+                </dd>
+              </div>
+            </dl>
           <div className="mt-3 flex items-center gap-3">
             <div
               className="h-1.5 flex-1 overflow-hidden rounded-full bg-raised"
@@ -164,8 +190,9 @@ export function WorkoutDay({
               />
             </div>
             <span className="tabular text-[12.5px] text-ink-muted">
-              {done}/{day.exercises.length}
+              {Math.round((done / Math.max(1, day.exercises.length)) * 100)}%
             </span>
+          </div>
           </div>
         </div>
 

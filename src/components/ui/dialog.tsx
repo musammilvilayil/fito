@@ -25,10 +25,10 @@ export function Dialog({
   return (
     <D.Root open={open} onOpenChange={onOpenChange}>
       <D.Portal>
-        <D.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-[2px] data-[state=open]:animate-fade-in" />
+        <D.Overlay className="fixed inset-0 z-50 bg-[rgb(20_40_35/0.28)] backdrop-blur-[3px] data-[state=open]:animate-fade-in" />
         <D.Content
           className={cn(
-            "fixed z-50 flex max-h-[92dvh] w-full flex-col border border-line bg-surface shadow-2xl shadow-black/50 focus:outline-none",
+            "fixed z-50 flex max-h-[92dvh] w-full flex-col border border-line bg-panel shadow-[0_24px_60px_-20px_rgb(29_70_60/0.35)] focus:outline-none",
             "bottom-0 left-0 rounded-t-2xl data-[state=open]:animate-rise",
             "sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl",
             size === "sm" && "sm:max-w-md",

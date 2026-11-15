@@ -355,7 +355,7 @@ function ResultOverlay({ outcome }: { outcome: Outcome }) {
   if (outcome.kind === "ok") {
     const m = outcome.data.member;
     return (
-      <div className="absolute inset-x-3 bottom-3 animate-rise rounded-2xl border border-success/40 bg-[#0f2a1f]/95 p-4 shadow-2xl" role="status" aria-live="polite">
+      <div className="absolute inset-x-3 bottom-3 animate-rise rounded-2xl border border-success/40 bg-panel/95 p-4 shadow-2xl" role="status" aria-live="polite">
         <div className="flex items-center gap-3">
           <CheckCircle2 className="size-8 shrink-0 text-success" />
           <div className="min-w-0 flex-1">
@@ -381,7 +381,7 @@ function ResultOverlay({ outcome }: { outcome: Outcome }) {
     );
   }
   return (
-    <div className="absolute inset-x-3 bottom-3 animate-rise rounded-2xl border border-danger/40 bg-[#2a1214]/95 p-4 shadow-2xl" role="alert">
+    <div className="absolute inset-x-3 bottom-3 animate-rise rounded-2xl border border-danger/40 bg-panel/95 p-4 shadow-2xl" role="alert">
       <div className="flex items-center gap-3">
         <XCircle className="size-8 shrink-0 text-danger" />
         <div className="min-w-0">

@@ -300,8 +300,8 @@ export function AssistantChat({ variant, initial }: { variant: "member" | "staff
 
       <form
         className={cn(
-          "sticky z-20 mt-4 rounded-2xl border border-line bg-surface/95 p-2 shadow-lg shadow-black/30 backdrop-blur",
-          variant === "member" ? "bottom-[calc(72px+env(safe-area-inset-bottom))] md:bottom-4" : "bottom-3",
+          "sticky z-20 mt-4 glass rounded-2xl border p-2",
+          variant === "member" ? "bottom-[calc(84px+env(safe-area-inset-bottom))] md:bottom-4" : "bottom-3",
         )}
         onSubmit={(e) => {
           e.preventDefault();

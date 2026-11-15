@@ -43,7 +43,7 @@ export default async function LandingPage() {
     <div className="relative min-h-dvh overflow-x-hidden">
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-[640px]"
-        style={{ background: "radial-gradient(760px 420px at 28% -60px, rgb(180 252 0 / 0.10), transparent 70%)" }}
+        style={{ background: "radial-gradient(760px 420px at 28% -60px, rgb(31 157 122 / 0.14), transparent 70%)" }}
         aria-hidden
       />
       <header className="relative mx-auto flex max-w-6xl items-center justify-between px-5 py-5 sm:px-8">

@@ -110,7 +110,7 @@ export function ExerciseLibrary({ equipment, canCreate }: { equipment: string[];
             <button
               key={e.id}
               onClick={() => setOpen(e)}
-              className="flex items-center gap-3 rounded-[var(--radius-card)] border border-line bg-surface p-3 text-left transition-colors hover:border-line-strong"
+              className="flex items-center gap-3 glass rounded-[var(--radius-card)] border p-3 text-left transition-colors hover:border-line-strong"
             >
               <Thumb src={e.images[0]} size={64} />
               <span className="min-w-0 flex-1">

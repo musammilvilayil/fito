@@ -139,7 +139,7 @@ export function PlansManager({ plans, canManage }: { plans: PlanRow[]; canManage
 
 function PlanCard({ plan, canManage, onEdit, onToggle }: { plan: PlanRow; canManage: boolean; onEdit: () => void; onToggle: () => void }) {
   return (
-    <div className={cn("flex flex-col rounded-[var(--radius-card)] border border-line bg-surface p-5", !plan.isActive && "opacity-60")}>
+    <div className={cn("flex flex-col glass rounded-[var(--radius-card)] border p-5", !plan.isActive && "opacity-60")}>
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="text-[16px] font-semibold tracking-tight">{plan.name}</h3>

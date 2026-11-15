@@ -50,7 +50,7 @@ export function PageSkeleton() {
 
 export function AccessDenied({ message }: { message?: string }) {
   return (
-    <div className="mx-auto max-w-md rounded-[var(--radius-card)] border border-line bg-surface px-6 py-12 text-center">
+    <div className="mx-auto max-w-md glass rounded-[var(--radius-card)] border px-6 py-12 text-center">
       <h2 className="text-lg font-semibold">You don&apos;t have access to this page</h2>
       <p className="mt-2 text-sm text-ink-muted">
         {message ?? "Your role doesn't include this section. Ask your gym owner if you need access."}

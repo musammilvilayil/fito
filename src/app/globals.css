@@ -1,38 +1,46 @@
 @import "tailwindcss";
 
 /*
- * FITO design tokens. Dark charcoal foundation (from the logo background),
- * white type, electric lime accent (#B4FC00, sampled from the logo mark).
- * Lime is only ever used on dark surfaces or as a fill behind dark text:
- * lime on white has a 1.25:1 contrast ratio and is unreadable.
+ * FITO design tokens: a light, airy theme. The page sits on a soft mint →
+ * cream → peach gradient; cards are frosted white glass. Primary green
+ * (#10735c) carries actions and links; coral (#e8664a) is a decorative
+ * second accent for icons and chart highlights only (too light for text).
+ * Text colours keep at least 4.5:1 contrast on white and on the gradient.
+ *
+ * The primary colour keeps the token name "lime" (from the original dark
+ * theme) so every component picks up the new palette unchanged.
  */
 @theme {
-  --color-canvas: #14171b;
-  --color-surface: #1b1f24;
-  --color-raised: #23282e;
-  --color-overlay: #2b3138;
-  --color-line: #2e343c;
-  --color-line-strong: #3c444e;
+  --color-canvas: #eef4ef;
+  --color-surface: rgb(255 255 255 / 0.82);
+  --color-panel: #ffffff;
+  --color-raised: #f2f6f4;
+  --color-overlay: #e7eeea;
+  --color-line: rgb(29 56 50 / 0.1);
+  --color-line-strong: rgb(29 56 50 / 0.2);
 
-  --color-ink: #f3f5f7;
-  --color-ink-muted: #a7b0bb;
-  --color-ink-subtle: #77818d;
+  --color-ink: #1d2a2c;
+  --color-ink-muted: #495758;
+  --color-ink-subtle: #576465;
 
-  --color-lime: #b4fc00;
-  --color-lime-hover: #c6ff3d;
-  --color-lime-ink: #10140a;
-  --color-lime-soft: rgb(180 252 0 / 0.12);
+  --color-lime: #10735c;
+  --color-lime-hover: #0d6150;
+  --color-lime-ink: #ffffff;
+  --color-lime-soft: rgb(31 157 122 / 0.12);
+  --color-mint: #1f9d7a;
+  --color-coral: #e8664a;
+  --color-coral-soft: rgb(232 102 74 / 0.12);
 
-  --color-teal: #2dd4bf;
-  --color-success: #34d399;
-  --color-warning: #fbbf24;
-  --color-danger: #f87171;
-  --color-info: #60a5fa;
+  --color-teal: #0e7490;
+  --color-success: #0d7149;
+  --color-warning: #a14a06;
+  --color-danger: #c0352a;
+  --color-info: #2357d6;
 
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
-  --radius-card: 14px;
+  --radius-card: 20px;
 
   --animate-fade-in: fade-in 180ms ease-out;
   --animate-rise: rise 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -51,27 +59,32 @@
   html {
     /* Keep scrolled-to elements clear of the sticky mobile header. */
     scroll-padding-top: 72px;
-    color-scheme: dark;
+    color-scheme: light;
     background: var(--color-canvas);
     color: var(--color-ink);
     -webkit-tap-highlight-color: transparent;
   }
   body {
+    /* Soft mint → cream → peach wash behind everything. */
+    background:
+      radial-gradient(900px 600px at -10% -10%, rgb(170 225 205 / 0.55), transparent 60%),
+      radial-gradient(900px 700px at 110% 110%, rgb(250 205 180 / 0.6), transparent 60%),
+      linear-gradient(135deg, #e6f3ed 0%, #f7f4ec 50%, #fbe8dc 100%);
+    background-attachment: fixed;
     font-family: var(--font-sans);
     font-feature-settings: "ss01", "cv11";
     min-height: 100dvh;
     -webkit-font-smoothing: antialiased;
   }
   ::selection {
-    background: var(--color-lime);
-    color: var(--color-lime-ink);
+    background: rgb(31 157 122 / 0.25);
+    color: var(--color-ink);
   }
   :focus-visible {
     outline: 2px solid var(--color-lime);
     outline-offset: 2px;
   }
   input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: invert(0.8);
     cursor: pointer;
   }
   @media (prefers-reduced-motion: reduce) {
@@ -84,6 +97,17 @@
 
 @utility tabular {
   font-variant-numeric: tabular-nums;
+}
+
+/* Frosted-glass card surface. */
+@utility glass {
+  background-color: var(--color-surface);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  border-color: rgb(255 255 255 / 0.75);
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.8) inset,
+    0 10px 30px -14px rgb(29 70 60 / 0.22);
 }
 
 /* Printable documents (receipts) use a light theme. */

@@ -285,7 +285,7 @@ export function ImportWizard() {
           </div>
           <div className="flex items-center justify-between px-5 py-3">
             <label className="flex items-center gap-2 text-[13px] text-ink-muted">
-              <input type="checkbox" checked={onlyProblems} onChange={(e) => setOnlyProblems(e.target.checked)} className="accent-[#b4fc00]" />
+              <input type="checkbox" checked={onlyProblems} onChange={(e) => setOnlyProblems(e.target.checked)} className="accent-[#10735c]" />
               Only show rows with errors or warnings
             </label>
           </div>

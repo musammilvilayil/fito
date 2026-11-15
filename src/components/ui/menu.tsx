@@ -12,7 +12,7 @@ export function Menu({ trigger, children, align = "end" }: { trigger: ReactNode;
         <M.Content
           align={align}
           sideOffset={6}
-          className="z-50 min-w-[200px] rounded-xl border border-line bg-raised p-1 shadow-xl shadow-black/40 data-[state=open]:animate-fade-in"
+          className="z-50 min-w-[200px] rounded-xl border border-line bg-panel p-1 shadow-[0_16px_40px_-16px_rgb(29_70_60/0.35)] data-[state=open]:animate-fade-in"
         >
           {children}
         </M.Content>

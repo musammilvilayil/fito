@@ -60,7 +60,7 @@ export function MemberShell({
   }
 
   return (
-    <div className="min-h-dvh pb-[calc(76px+env(safe-area-inset-bottom))] md:pb-10">
+    <div className="min-h-dvh pb-[calc(96px+env(safe-area-inset-bottom))] md:pb-10">
       <header className="sticky top-0 z-30 border-b border-line bg-canvas/85 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-3xl items-center gap-3 px-4">
           <Logo href="/me" size="sm" />
@@ -127,9 +127,9 @@ export function MemberShell({
 
       <nav
         aria-label="Member tabs"
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+        className="glass fixed inset-x-3 bottom-[calc(10px+env(safe-area-inset-bottom))] z-30 rounded-[22px] border md:hidden"
       >
-        <ul className="mx-auto grid max-w-md grid-cols-5">
+        <ul className="mx-auto grid max-w-md grid-cols-5 p-1.5">
           {TABS.map((t) => {
             const active = isActive(t);
             return (
@@ -137,9 +137,12 @@ export function MemberShell({
                 <Link
                   href={t.href}
                   aria-current={active ? "page" : undefined}
-                  className={cn("flex h-[60px] flex-col items-center justify-center gap-1 text-[11px] font-medium", active ? "text-ink" : "text-ink-subtle")}
+                  className={cn(
+                    "flex h-[54px] flex-col items-center justify-center gap-0.5 rounded-2xl text-[11px] font-medium transition-colors",
+                    active ? "bg-lime-soft text-lime" : "text-ink-subtle",
+                  )}
                 >
-                  <t.icon className={cn("size-5", active && "text-lime")} aria-hidden />
+                  <t.icon className="size-5" aria-hidden />
                   {t.label}
                 </Link>
               </li>

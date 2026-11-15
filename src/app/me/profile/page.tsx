@@ -137,7 +137,7 @@ export default async function MemberProfilePage() {
         )}
       </Card>
 
-      <Link href="/account" className="flex items-center gap-2 rounded-[var(--radius-card)] border border-line bg-surface px-5 py-4 text-sm font-medium hover:border-line-strong">
+      <Link href="/account" className="flex items-center gap-2 glass rounded-[var(--radius-card)] border px-5 py-4 text-sm font-medium hover:border-line-strong">
         <KeyRound className="size-4 text-ink-subtle" /> Change password
       </Link>
     </div>

@@ -37,11 +37,23 @@ const valueOf = (e: Entry, k: MetricKey) => (k === "weightKg" ? e.weightKg : k =
 const fmt = (v: number, unit: string) => `${Number.isInteger(v) ? v : v.toFixed(1)} ${unit}`;
 const shortDate = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "UTC" });
 
-export function ProgressView({ memberId, entries, today, selfUserId }: { memberId: string; entries: Entry[]; today: string; selfUserId: string }) {
+export function ProgressView({
+  memberId,
+  entries,
+  today,
+  selfUserId,
+  openAdd = false,
+}: {
+  memberId: string;
+  entries: Entry[];
+  today: string;
+  selfUserId: string;
+  openAdd?: boolean;
+}) {
   const router = useRouter();
   const available = METRICS.filter((m) => entries.some((e) => valueOf(e, m.key) !== null));
   const [metric, setMetric] = useState<MetricKey>(available[0]?.key ?? "weightKg");
-  const [adding, setAdding] = useState(false);
+  const [adding, setAdding] = useState(openAdd);
   const current = METRICS.find((m) => m.key === metric)!;
 
   // One point per day (the latest entry that day), oldest first.

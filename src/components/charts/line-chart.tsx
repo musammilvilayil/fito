@@ -11,15 +11,15 @@ import { cn } from "@/lib/cn";
  * label, a crosshair that snaps to the nearest point (pointer and arrow keys),
  * a value-first tooltip, and a table view so nothing is hover-only.
  *
- * Colours are the same validated steps as the column chart: #73a300 for the
- * series, the brand lime for the latest point.
+ * Colours match the column chart: green #1f9d7a for the series, coral
+ * #e8664a for the latest point (validated for the light surface).
  */
 export type LinePoint = { date: string; label: string; value: number };
 
-const LINE = "#73a300";
-const LATEST = "#b4fc00";
-const GRID = "#2e343c";
-const SURFACE = "#1b1f24";
+const LINE = "#1f9d7a";
+const LATEST = "#e8664a";
+const GRID = "#e1e8e5";
+const SURFACE = "#ffffff";
 
 function niceRange(min: number, max: number): { lo: number; hi: number; step: number } {
   const span = Math.max(max - min, Math.abs(max) * 0.04, 1);
@@ -141,7 +141,7 @@ export function LineChart({
             )}
             <path d={area} fill={LINE} opacity={0.1} />
             <path d={line} fill="none" stroke={LINE} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
-            {a && <line x1={a.px} x2={a.px} y1={padTop} y2={y(lo)} stroke="#3c444e" strokeWidth={1} pointerEvents="none" />}
+            {a && <line x1={a.px} x2={a.px} y1={padTop} y2={y(lo)} stroke="#b6c4bf" strokeWidth={1} pointerEvents="none" />}
             {a && a !== last && <circle cx={a.px} cy={a.py} r={4} fill={LINE} stroke={SURFACE} strokeWidth={2} />}
             {last && (
               <>

@@ -91,7 +91,7 @@ export function StaffShell({
 
   return (
     <div className="min-h-dvh lg:pl-[260px]">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[260px] border-r border-line bg-surface/60 lg:flex lg:flex-col">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[260px] glass border-r lg:flex lg:flex-col">
         {sidebar}
       </aside>
 
@@ -109,8 +109,8 @@ export function StaffShell({
 
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Menu">
-          <div className="absolute inset-0 bg-black/60 animate-fade-in" onClick={() => setMobileOpen(false)} />
-          <div className="absolute inset-y-0 left-0 flex w-[84%] max-w-[300px] flex-col border-r border-line bg-surface animate-rise">
+          <div className="absolute inset-0 bg-[rgb(20_40_35/0.28)] animate-fade-in" onClick={() => setMobileOpen(false)} />
+          <div className="absolute inset-y-0 left-0 flex w-[84%] max-w-[300px] flex-col border-r border-line bg-panel animate-rise">
             <button
               className="absolute right-3 top-3 rounded-lg p-2 text-ink-muted hover:bg-raised"
               onClick={() => setMobileOpen(false)}

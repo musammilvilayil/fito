@@ -10,7 +10,7 @@ export default function StaffError({ error, reset }: { error: Error & { digest?:
     console.error(error);
   }, [error]);
   return (
-    <div className="rounded-[var(--radius-card)] border border-line bg-surface">
+    <div className="glass rounded-[var(--radius-card)] border">
       <EmptyState
         icon={AlertTriangle}
         title="This page couldn't load"

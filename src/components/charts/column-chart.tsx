@@ -10,16 +10,16 @@ import { cn } from "@/lib/cn";
  * gridlines, values in text colours (never the bar colour), a hover/keyboard
  * tooltip per bar, and a table view so no value is hover-only.
  *
- * Chart fill #73a300 is a deeper step of the brand lime that passes the
- * dark-surface lightness/contrast checks; the brand lime (#b4fc00) marks the
- * highlighted (current) bar only.
+ * Series green #1f9d7a with a coral (#e8664a) highlight for the current
+ * bar; both pass the light-surface lightness, chroma, colour-blind and
+ * 3:1 contrast checks (dataviz palette validator).
  */
 export type ColumnDatum = { key: string; label: string; fullLabel: string; value: number };
 
-const FILL = "#73a300";
-const FILL_HOVER = "#86bb0a";
-const HIGHLIGHT = "#b4fc00";
-const GRID = "#2e343c";
+const FILL = "#1f9d7a";
+const FILL_HOVER = "#188a6a";
+const HIGHLIGHT = "#e8664a";
+const GRID = "#e1e8e5";
 
 function niceMax(max: number): { top: number; step: number } {
   if (max <= 0) return { top: 4, step: 1 };

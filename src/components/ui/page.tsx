@@ -41,7 +41,7 @@ export function StatCard({
   className?: string;
 }) {
   return (
-    <div className={cn("relative overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface p-4 sm:p-5", className)}>
+    <div className={cn("relative overflow-hidden glass rounded-[var(--radius-card)] border p-4 sm:p-5", className)}>
       <div className="flex items-center justify-between gap-2">
         <span className="text-[12.5px] font-medium text-ink-muted">{label}</span>
         {Icon && (
@@ -70,10 +70,10 @@ export function Avatar({ name, size = 36, className }: { name: string; size?: nu
   // Stable hue from the name so avatars are easy to tell apart.
   let hash = 0;
   for (const ch of name) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
-  const hues = ["#3b4a2a", "#24414a", "#3d3350", "#4a3a26", "#2b3f52", "#4a2f37"];
+  const hues = ["#d3eee2", "#d9e7f7", "#e7def6", "#fbe1cf", "#f4e6c4", "#f6d9e1"];
   return (
     <span
-      className={cn("inline-grid shrink-0 place-items-center rounded-full border border-white/10 font-semibold text-ink", className)}
+      className={cn("inline-grid shrink-0 place-items-center rounded-full border border-white font-semibold text-ink", className)}
       style={{ width: size, height: size, fontSize: size * 0.36, background: hues[hash % hues.length] }}
       aria-hidden
     >
