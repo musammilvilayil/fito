@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Creates local development and test databases, applies migrations and gives
-# the fito_app role a password. Assumes a local Postgres superuser "postgres"
+# Creates local development and test databases, applies migrations, loads the
+# exercise library and gives the fito_app role a password. Safe to re-run. Assumes a local Postgres superuser "postgres"
 # reachable on localhost:5432 without a password (adjust PG* vars if needed).
 set -euo pipefail
 
@@ -15,6 +15,7 @@ for db in fito fito_test; do
     echo "Created database $db"
   fi
   DATABASE_ADMIN_URL="postgres://$PGUSER@$PGHOST:$PGPORT/$db" npx tsx scripts/migrate.ts
+  DATABASE_ADMIN_URL="postgres://$PGUSER@$PGHOST:$PGPORT/$db" npx tsx scripts/seed-exercises.ts
 done
 
 psql -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d fito -v ON_ERROR_STOP=1 \

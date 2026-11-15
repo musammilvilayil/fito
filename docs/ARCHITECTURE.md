@@ -70,8 +70,56 @@ Browser (owner / trainer / member)      Future Expo Android app
 * scrypt password hashing (N=2^15, r=8, p=3), constant-time comparison and a
   dummy hash for unknown accounts.
 * Database-backed rate limits on login, registration, invites and resets.
-* CSRF: cookie-authenticated writes must come from the app's own origin.
+* CSRF: writes that carry the session cookie must come from the app's own
+  origin, and any request that sends an `Origin` header is checked. Native
+  apps use Bearer tokens and send neither.
 * Security headers (HSTS, frame denial, nosniff, referrer policy,
   camera permission limited to our origin for the QR scanner).
 * Audit log of sensitive actions (staff changes, resets, payments, approvals).
 * Secrets only in environment variables; the AI key is used server-side only.
+
+## Workout plans and AI
+
+```
+trainer picks member ─▶ generatePlan ─┬─ AI draft (Claude, structured output)
+                                      │     validate against library + safety rules
+                                      │     └─ problems? retry once with them ─▶ still bad? template
+                                      ├─ rule-based template
+                                      └─ blank
+                    ▼
+        plan (status: pending_review / draft, version 1)
+                    │  edits create new versions
+                    ▼
+        approvePlan (needs workouts.approve; warnings must be acknowledged;
+                     medical clearance must be recorded if screening requires it)
+                    ▼
+        active (one per member, enforced by a partial unique index) ─▶ member sees it
+```
+
+* The AI call runs **outside** any database transaction; prep and save are
+  separate short transactions.
+* The prompt never includes the member's name, phone, email or member code.
+  It contains:
+  * goal, level and schedule;
+  * age and gender, if recorded;
+  * limitation tags;
+  * free-text notes from the member's limitations and preferences, plus the
+    trainer's instructions. These are sent as typed, so don't put names in
+    them;
+  * a candidate exercise list filtered by those rules. The model can only
+    pick IDs from that list.
+* Requests use Anthropic's server-side refusal fallback (beta). Usage,
+  latency, cost and the model that answered are stored in `ai_generations`.
+  A monthly per-gym limit stops runaway cost.
+* Safety rules (`src/shared/workout-rules.ts`, `exercise-safety.ts`) run in
+  the browser while editing and again on the server at save and approval.
+
+## Member portal
+
+`/me` serves members (role `member`) with a member-safe projection of their
+record (`selfView` in `src/server/modules/portal/service.ts`: no staff notes,
+QR token or invite state). Members can only reach their own record. Every
+service checks `ctx.memberId === memberId` before allowing self-access, and
+RLS still limits them to their gym. Workout logs (`workout_logs`, one per
+member, plan, day and date) and progress entries (`progress_entries`) are
+written by the member or by staff who coach them.
