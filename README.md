@@ -101,6 +101,29 @@ network, allow it for private networks. Phone browsers only allow the camera
 on https sites, so on a phone use name search for check-in. The laptop's own
 camera works at `localhost`.
 
+**In GitHub Codespaces:** Docker gives you PostgreSQL, and the setup fills in
+the Codespace's https address for you. Run these in the Codespace terminal:
+
+```bash
+git checkout fito-web-mvp
+```
+
+```bash
+docker run -d --name fito-db --restart unless-stopped -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:16
+```
+
+```bash
+npm install
+```
+
+```bash
+PGPASSWORD=postgres npm run demo
+```
+
+When it says *Ready*, open port 3000 from the **Ports** tab. Ports are private
+to your GitHub account by default. Making port 3000 *Public* lets anyone with
+the link open the demo.
+
 **For development**, use `npm run dev` instead of build and start. To set up
 the databases without the demo gym, run `npm run db:setup-local`. It's safe
 to re-run, and you can set `PGHOST`, `PGPORT`, `PGUSER` or `PGPASSWORD` if

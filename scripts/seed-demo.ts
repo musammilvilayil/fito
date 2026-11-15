@@ -33,7 +33,8 @@ async function main() {
   if (!process.env.DATABASE_URL || !process.env.DATABASE_ADMIN_URL) {
     throw new Error("Set DATABASE_URL (fito_app) and DATABASE_ADMIN_URL (owner), or create .env.local.");
   }
-  if ((process.env.APP_URL ?? "").startsWith("https://") && !args.confirm) {
+  // GitHub Codespaces are development machines even though their address is https.
+  if ((process.env.APP_URL ?? "").startsWith("https://") && !args.confirm && process.env.CODESPACES !== "true") {
     throw new Error("APP_URL is https, so this looks like a live server. Keep demo data on a separate demo deployment, or re-run with --confirm.");
   }
   try {

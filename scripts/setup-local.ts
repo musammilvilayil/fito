@@ -105,10 +105,14 @@ async function main() {
     await client.end();
   }
 
+  // In GitHub Codespaces the browser reaches the app through a forwarded
+  // https address; APP_URL must match it (sign-in checks the request origin).
+  const codespace = process.env.CODESPACE_NAME && process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN;
+  const appUrl = codespace ? `https://${process.env.CODESPACE_NAME}-3000.${process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}` : "http://localhost:3000";
   const env = [
     `DATABASE_URL=${urlFor("fito_app", APP_DB_PASSWORD, "fito")}`,
     `DATABASE_ADMIN_URL=${urlFor(user, password, "fito")}`,
-    "APP_URL=http://localhost:3000",
+    `APP_URL=${appUrl}`,
   ];
   if (!existsSync(".env.local")) {
     writeFileSync(".env.local", `# Local development only. Created by npm run db:setup-local.\n${env.join("\n")}\n`);
@@ -120,7 +124,7 @@ async function main() {
   if (password) {
     console.log(`For the automated tests, also set TEST_DATABASE_ADMIN_URL=${urlFor(user, "****", "fito_test")} (with your password).`);
   }
-  console.log("\nDone. Next: npm run db:seed-demo, then npm run build and npm start, and open http://localhost:3000");
+  console.log(`\nDone. Next: npm run db:seed-demo, then npm run build and npm start, and open ${appUrl}`);
 }
 
 main().catch((err) => {
