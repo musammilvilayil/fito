@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+/*
+ * FITO design tokens. Dark charcoal foundation (from the logo background),
+ * white type, electric lime accent (#B4FC00, sampled from the logo mark).
+ * Lime is only ever used on dark surfaces or as a fill behind dark text:
+ * lime on white has a 1.25:1 contrast ratio and is unreadable.
+ */
+@theme {
+  --color-canvas: #14171b;
+  --color-surface: #1b1f24;
+  --color-raised: #23282e;
+  --color-overlay: #2b3138;
+  --color-line: #2e343c;
+  --color-line-strong: #3c444e;
+
+  --color-ink: #f3f5f7;
+  --color-ink-muted: #a7b0bb;
+  --color-ink-subtle: #77818d;
+
+  --color-lime: #b4fc00;
+  --color-lime-hover: #c6ff3d;
+  --color-lime-ink: #10140a;
+  --color-lime-soft: rgb(180 252 0 / 0.12);
+
+  --color-teal: #2dd4bf;
+  --color-success: #34d399;
+  --color-warning: #fbbf24;
+  --color-danger: #f87171;
+  --color-info: #60a5fa;
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --radius-card: 14px;
+
+  --animate-fade-in: fade-in 180ms ease-out;
+  --animate-rise: rise 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+@layer base {
+  html {
+    /* Keep scrolled-to elements clear of the sticky mobile header. */
+    scroll-padding-top: 72px;
+    color-scheme: dark;
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+    min-height: 100dvh;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection {
+    background: var(--color-lime);
+    color: var(--color-lime-ink);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-lime);
+    outline-offset: 2px;
+  }
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.8);
+    cursor: pointer;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Printable documents (receipts) use a light theme. */
+@media print {
+  html, body {
+    background: #fff !important;
+    color: #111 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
