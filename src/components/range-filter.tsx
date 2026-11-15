@@ -17,10 +17,11 @@ export function RangeFilter({
 }: {
   from: string;
   to: string;
-  method: string;
+  method?: string;
   today: string;
   presets: { label: string; from: string; to: string }[];
-  methods: { value: string; label: string }[];
+  /** Optional payment-method filter; omitted on pages without one. */
+  methods?: { value: string; label: string }[];
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -67,14 +68,16 @@ export function RangeFilter({
         <Button type="submit" size="sm" variant="secondary">
           Apply
         </Button>
-        <Select aria-label="Payment method" className="h-9 w-[150px]" value={method} onChange={(e) => go({ method: e.target.value })}>
-          <option value="">All methods</option>
-          {methods.map((m) => (
-            <option key={m.value} value={m.value}>
-              {m.label}
-            </option>
-          ))}
-        </Select>
+        {methods && (
+          <Select aria-label="Payment method" className="h-9 w-[150px]" value={method} onChange={(e) => go({ method: e.target.value })}>
+            <option value="">All methods</option>
+            {methods.map((m) => (
+              <option key={m.value} value={m.value}>
+                {m.label}
+              </option>
+            ))}
+          </Select>
+        )}
       </form>
     </div>
   );

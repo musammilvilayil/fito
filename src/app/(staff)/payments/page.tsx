@@ -18,7 +18,7 @@ import { requireStaffContext } from "@/server/auth/page";
 import { gymToday } from "@/server/modules/members/service";
 import { dailyCollections, listDues, listPayments, paymentSummary } from "@/server/modules/payments/service";
 import { CollectionsChart } from "./collections-chart";
-import { RangeFilter } from "./range-filter";
+import { RangeFilter } from "@/components/range-filter";
 
 export const metadata: Metadata = { title: "Payments" };
 

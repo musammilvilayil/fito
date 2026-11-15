@@ -19,6 +19,9 @@ import { MemberBilling } from "./billing/member-billing";
 import { listTrainers } from "@/server/modules/staff/service";
 import { MemberActions } from "./member-actions";
 import { TrainerPicker } from "./trainer-picker";
+import { memberAttendance } from "@/server/modules/attendance/service";
+import { formatTime } from "@/shared/dates";
+import { QrCard } from "./qr-card";
 
 export const metadata: Metadata = { title: "Member" };
 
@@ -26,13 +29,16 @@ export default async function MemberPage({ params }: PageProps<"/members/[id]">)
   const { id } = await params;
   const ctx = await requireStaffContext();
   const canBilling = hasPermission(ctx, "payments.view") || hasPermission(ctx, "memberships.manage");
-  const [member, trainers, billing] = await inGym(ctx, (tx) =>
+  const canAttendance = hasPermission(ctx, "attendance.view") || hasPermission(ctx, "attendance.record");
+  const canQr = hasPermission(ctx, "members.manage") || hasPermission(ctx, "attendance.record");
+  const [member, trainers, billing, visits] = await inGym(ctx, (tx) =>
     Promise.all([
       getMember(tx, ctx, id),
       listTrainers(tx, ctx),
       canBilling
         ? Promise.all([listMemberMemberships(tx, ctx, id), listMemberPayments(tx, ctx, id).catch(() => []), listPlans(tx, ctx)])
         : Promise.resolve(null),
+      canAttendance ? memberAttendance(tx, ctx, id, 8) : Promise.resolve(null),
     ]),
   );
   const today = gymToday(ctx);
@@ -195,6 +201,32 @@ export default async function MemberPage({ params }: PageProps<"/members/[id]">)
               )}
             </CardBody>
           </Card>
+          {visits && (
+            <Card>
+              <CardHeader title="Attendance" />
+              <div className="grid grid-cols-3 divide-x divide-line border-b border-line text-center">
+                <MiniStat label="This month" value={visits.thisMonth} />
+                <MiniStat label="Last 30 days" value={visits.last30} />
+                <MiniStat label="Day streak" value={visits.streak} />
+              </div>
+              {visits.visits.length === 0 ? (
+                <p className="px-5 py-4 text-sm text-ink-muted">No visits recorded yet.</p>
+              ) : (
+                <ul className="divide-y divide-line">
+                  {visits.visits.map((v) => (
+                    <li key={v.id} className="flex justify-between px-5 py-2.5 text-[13px]">
+                      <span>{formatDate(v.date)}</span>
+                      <span className="tabular text-ink-muted">
+                        {formatTime(v.checkInAt, ctx.gym.timezone)}
+                        {v.checkOutAt ? ` – ${formatTime(v.checkOutAt, ctx.gym.timezone)}` : ""}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          )}
+          {canQr && <QrCard memberId={member.id} memberName={member.fullName} memberCode={member.memberCode} gymName={ctx.gym.name} canRegenerate={canManage} />}
           <Card>
             <CardHeader title="FITO app access" />
             <CardBody className="text-sm text-ink-muted">
@@ -213,6 +245,15 @@ export default async function MemberPage({ params }: PageProps<"/members/[id]">)
         </div>
       </div>
     </>
+  );
+}
+
+function MiniStat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="px-2 py-3">
+      <div className="tabular text-xl font-semibold">{value}</div>
+      <div className="text-[11.5px] text-ink-subtle">{label}</div>
+    </div>
   );
 }
 

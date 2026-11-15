@@ -269,6 +269,12 @@ const duesSql = (gymId: string) => sql`
   where ms.gym_id = ${gymId} and ms.state = 'active' and ms.total_paise > coalesce(p.paid, 0)
   group by m.id, m.full_name, m.member_code, m.phone`;
 
+/** Outstanding amount across a member's active memberships. */
+export async function duesForMember(tx: Tx, ctx: GymContext, memberId: string): Promise<number> {
+  const result = await tx.execute(sql`select coalesce(sum(due), 0)::bigint as due from (${duesSql(ctx.gym.id)}) d where d.member_id = ${memberId}`);
+  return Number((result.rows[0] as { due: string }).due);
+}
+
 export async function duesTotal(tx: Tx, ctx: GymContext) {
   const result = await tx.execute(sql`select coalesce(sum(due), 0)::bigint as total, count(*)::int as members from (${duesSql(ctx.gym.id)}) d`);
   const r = result.rows[0] as { total: string; members: number };

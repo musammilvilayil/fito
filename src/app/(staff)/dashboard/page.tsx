@@ -1,4 +1,6 @@
-import { CalendarClock, CalendarDays, IndianRupee, UserCheck, UserPlus, Users, Wallet } from "lucide-react";
+import { Activity, CalendarClock, CalendarDays, DoorOpen, IndianRupee, ScanLine, UserCheck, UserPlus, Users, Wallet } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { attendanceSummary } from "@/server/modules/attendance/service";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { StandingBadge } from "@/components/members/standing-badge";
@@ -26,11 +28,13 @@ export default async function DashboardPage() {
   const ctx = await requireStaffContext();
   const canSeeMembers = hasPermission(ctx, "members.view_all") || hasPermission(ctx, "workouts.manage");
   const canSeeMoney = hasPermission(ctx, "payments.view");
-  const [setup, overview, money] = await inGym(ctx, (tx) =>
+  const canSeeAttendance = hasPermission(ctx, "attendance.view") || hasPermission(ctx, "attendance.record");
+  const [setup, overview, money, visits] = await inGym(ctx, (tx) =>
     Promise.all([
       getSetupStatus(tx, ctx),
       canSeeMembers ? getMemberOverview(tx, ctx) : Promise.resolve(null),
       canSeeMoney ? paymentSummary(tx, ctx) : Promise.resolve(null),
+      canSeeAttendance ? attendanceSummary(tx, ctx) : Promise.resolve(null),
     ]),
   );
   const firstName = ctx.user.fullName.split(" ")[0];
@@ -40,6 +44,22 @@ export default async function DashboardPage() {
     <>
       <PageHeader eyebrow={ctx.gym.name} title={`${greeting(ctx.gym.timezone)}, ${firstName}`} description="Here's what needs your attention today." />
       <SetupChecklist status={setup} canManageGym={hasPermission(ctx, "gym.manage")} canManageStaff={hasPermission(ctx, "staff.manage")} />
+
+      {visits && (
+        <div className="mb-4 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
+          <StatCard label="Checked in today" value={visits.today} icon={Activity} tone="lime" hint={`${visits.yesterday} yesterday · avg ${visits.avg7}/day`} />
+          <StatCard label="Probably inside now" value={visits.insideNow} icon={DoorOpen} hint="Checked in, not out yet" />
+          {hasPermission(ctx, "attendance.record") && (
+            <div className="col-span-2 flex items-center justify-center rounded-[var(--radius-card)] border border-dashed border-line-strong p-4 lg:col-span-1">
+              <Button asChild size="lg" className="w-full sm:w-auto">
+                <Link href="/attendance/scan">
+                  <ScanLine /> Open check-in scanner
+                </Link>
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
 
       {money && (
         <div className="mb-4 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">

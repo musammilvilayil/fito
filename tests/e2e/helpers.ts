@@ -1,4 +1,19 @@
 import { expect, type Page } from "@playwright/test";
+import { Client } from "pg";
+
+/**
+ * The suite registers more gyms than FITO's real limit (10 per IP per hour).
+ * Clear that counter before each test registration; production is unchanged.
+ */
+async function resetRegistrationLimit() {
+  const client = new Client({ connectionString: process.env.E2E_DATABASE_ADMIN_URL ?? "postgres://postgres@localhost:5432/fito" });
+  await client.connect();
+  try {
+    await client.query("delete from rate_limits where key like 'register:%' or key like 'login:%'");
+  } finally {
+    await client.end();
+  }
+}
 
 let counter = 0;
 /** Unique Indian mobile number per call, so tests don't collide across runs. */
@@ -10,6 +25,7 @@ export function testPhone(): string {
 
 export async function registerGym(page: Page, opts: { gymName: string; ownerName?: string; phone?: string }) {
   const phone = opts.phone ?? testPhone();
+  await resetRegistrationLimit();
   await page.goto("/register");
   await page.getByLabel("Gym name").fill(opts.gymName);
   await page.getByLabel("City").fill("Kochi");

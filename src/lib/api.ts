@@ -5,6 +5,7 @@ export class ApiError extends Error {
     public readonly code: string,
     message: string,
     public readonly fieldErrors: Record<string, string> = {},
+    public readonly details: unknown = null,
   ) {
     super(message);
     this.name = "ApiError";
@@ -28,7 +29,7 @@ export async function api<T = unknown>(path: string, opts: Options = {}): Promis
     throw new ApiError(0, "network_error", "Can't reach FITO. Check your internet connection and try again.");
   }
   const json = (await res.json().catch(() => null)) as
-    | { data?: T; error?: { code: string; message: string; details?: { fieldErrors?: Record<string, string> } } }
+    | { data?: T; error?: { code: string; message: string; details?: { fieldErrors?: Record<string, string> } & Record<string, unknown> } }
     | null;
   if (!res.ok) {
     const e = json?.error;
@@ -37,6 +38,7 @@ export async function api<T = unknown>(path: string, opts: Options = {}): Promis
       e?.code ?? "error",
       e?.message ?? `Request failed (${res.status})`,
       e?.details?.fieldErrors ?? {},
+      e?.details ?? null,
     );
   }
   return json?.data as T;
