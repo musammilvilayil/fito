@@ -50,6 +50,6 @@ When listing people, show at most about 10 and say how many there are in total. 
 export const SYSTEM_PROMPTS: Record<Persona, string> = { member: MEMBER, staff: STAFF };
 
 export const SUGGESTIONS: Record<Persona, string[]> = {
-  member: ["When does my membership end?", "What's my workout today?", "How do I do a Romanian deadlift?", "How much protein should I eat?"],
+  member: ["Is the gym busy right now?", "When does my membership end?", "What's my workout today?", "How do I do a Romanian deadlift?"],
   staff: ["How many people checked in today?", "Who has pending payments?", "Whose memberships expire this week?", "Which plans are waiting for approval?"],
 };

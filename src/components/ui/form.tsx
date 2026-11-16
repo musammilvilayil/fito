@@ -2,8 +2,8 @@ import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTML
 import { cn } from "@/lib/cn";
 
 const control =
-  "w-full min-w-0 rounded-xl border border-line bg-white/80 px-3 text-sm text-ink placeholder:text-ink-subtle transition-colors " +
-  "hover:border-line-strong focus:border-lime/70 focus:outline-none focus:ring-2 focus:ring-lime/20 " +
+  "w-full min-w-0 rounded-xl border border-[rgb(29_56_50/0.14)] bg-white/75 px-3.5 text-sm text-ink placeholder:text-ink-subtle transition-[border-color,box-shadow,background-color] " +
+  "hover:border-line-strong focus:border-lime/60 focus:bg-white focus:outline-none focus:ring-4 focus:ring-lime/12 " +
   "disabled:opacity-60 aria-[invalid=true]:border-danger/70 aria-[invalid=true]:focus:ring-danger/20";
 
 export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
@@ -68,7 +68,7 @@ export function Field({
 const CHECKBOX_CLASS =
   "size-4 shrink-0 cursor-pointer appearance-none rounded border border-line-strong bg-raised bg-center bg-no-repeat " +
   "checked:border-lime checked:bg-lime " +
-  "checked:bg-[url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2310140a' stroke-width='3.5'%3E%3Cpath d='m5 12 5 5 9-10'/%3E%3C/svg%3E\")]";
+  "checked:bg-[url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='3.5'%3E%3Cpath d='m5 12 5 5 9-10'/%3E%3C/svg%3E\")]";
 
 export function Checkbox({ label, className, ...props }: InputHTMLAttributes<HTMLInputElement> & { label: ReactNode }) {
   return (
@@ -86,7 +86,7 @@ export function Checkbox({ label, className, ...props }: InputHTMLAttributes<HTM
 export function FormError({ message }: { message?: string | null }) {
   if (!message) return null;
   return (
-    <div role="alert" className="rounded-[10px] border border-danger/30 bg-danger/10 px-3 py-2.5 text-sm text-danger">
+    <div role="alert" className="rounded-xl border border-danger/25 bg-danger/8 px-3.5 py-2.5 text-sm text-danger">
       {message}
     </div>
   );

@@ -1,7 +1,8 @@
 import "server-only";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import type { z } from "zod";
-import { addDays, diffDays, type ISODate } from "@/shared/dates";
+import { addDays, diffDays, formatDate, type ISODate } from "@/shared/dates";
+import { BATCH_LABELS, batchHoursLabel, batchHoursOf, inBatch, timeIn } from "@/shared/batches";
 import { CAN_CHECK_IN, STANDING_LABELS, type MemberStanding } from "@/shared/membership";
 import { parseQrPayload, type checkInSchema } from "@/shared/schemas/attendance";
 import { hasPermission, requirePermission, type GymContext } from "../../auth/context";
@@ -17,6 +18,8 @@ export type CheckInResult = {
   attendanceId: string;
   checkInAt: Date;
   overridden: boolean;
+  /** Set when the member came outside their batch and the gym only warns. */
+  batchNote: string | null;
   member: {
     id: string;
     fullName: string;
@@ -56,25 +59,61 @@ async function findMemberId(tx: Tx, ctx: GymContext, input: z.output<typeof chec
 export async function checkIn(tx: Tx, ctx: GymContext, input: z.output<typeof checkInSchema>): Promise<CheckInResult> {
   requirePermission(ctx, "attendance.record");
   const memberId = await findMemberId(tx, ctx, input);
+  return recordCheckIn(tx, ctx, memberId, { method: input.qr ? "qr" : "manual", overrideReason: input.overrideReason ?? null, self: false });
+}
+
+/** A member checks themself in by scanning the gym's entrance QR. Same rules, no override. */
+export async function selfCheckIn(tx: Tx, ctx: GymContext): Promise<CheckInResult> {
+  if (!ctx.memberId) throw forbidden("Only members can check themselves in.");
+  return recordCheckIn(tx, ctx, ctx.memberId, { method: "qr", overrideReason: null, self: true });
+}
+
+async function recordCheckIn(
+  tx: Tx,
+  ctx: GymContext,
+  memberId: string,
+  opts: { method: "qr" | "manual"; overrideReason: string | null; self: boolean },
+): Promise<CheckInResult> {
+  const input = { overrideReason: opts.overrideReason };
   const member = await getMember(tx, ctx, memberId).catch(() => {
     throw new CheckInRefused("unknown_member", "Member not found.");
   });
   const brief = { id: member.id, fullName: member.fullName, memberCode: member.memberCode, standing: member.standing };
+  const who = opts.self ? "You" : member.fullName;
 
   let overridden = false;
   if (!CAN_CHECK_IN.has(member.standing)) {
-    if (member.standing === "inactive") throw new CheckInRefused("inactive", `${member.fullName} is deactivated.`, brief);
+    if (member.standing === "inactive") throw new CheckInRefused("inactive", `${who} ${opts.self ? "are" : "is"} deactivated. Please speak to the front desk.`, brief);
     const reason =
       member.standing === "frozen"
         ? "Membership is frozen."
         : member.standing === "upcoming"
-          ? `Membership starts on ${member.current?.startDate}.`
+          ? `Membership starts on ${member.current ? formatDate(member.current.startDate) : "a later date"}.`
           : member.standing === "expired"
-            ? `Membership expired on ${member.current?.validUntil}.`
+            ? `Membership expired on ${member.current ? formatDate(member.current.validUntil) : "an earlier date"}.`
             : "No membership.";
+    if (opts.self) throw new CheckInRefused(`not_allowed_${member.standing}`, `${STANDING_LABELS[member.standing]}: ${reason} Please see the front desk.`, brief);
     if (!input.overrideReason) throw new CheckInRefused(`not_allowed_${member.standing}`, `${STANDING_LABELS[member.standing]}: ${reason}`, brief);
     if (!hasPermission(ctx, "attendance.override")) throw forbidden("Only the owner or a manager can let someone in without an active membership.");
     overridden = true;
+  }
+
+  // Morning/evening batches.
+  let batchNote: string | null = null;
+  const policy = ctx.gym.settings.batchPolicy ?? "warn";
+  if (policy !== "off" && member.batch !== "any") {
+    const hours = batchHoursOf(ctx.gym.settings);
+    if (!inBatch(member.batch, timeIn(ctx.gym.timezone), hours)) {
+      const note = `${opts.self ? "Your" : `${member.fullName}'s`} batch is ${BATCH_LABELS[member.batch].toLowerCase()} (${batchHoursLabel(member.batch, hours)}).`;
+      if (policy === "enforce") {
+        if (opts.self) throw new CheckInRefused("outside_batch", `${note} Please come during your batch, or ask the front desk.`, brief);
+        if (!input.overrideReason) throw new CheckInRefused("outside_batch", `Outside batch: ${note}`, brief);
+        if (!hasPermission(ctx, "attendance.override")) throw forbidden("Only the owner or a manager can let someone in outside their batch.");
+        overridden = true;
+      } else {
+        batchNote = `Outside batch: ${note}`;
+      }
+    }
   }
 
   const today = gymToday(ctx);
@@ -87,7 +126,7 @@ export async function checkIn(tx: Tx, ctx: GymContext, input: z.output<typeof ch
   };
   const refuseDuplicate = (at: Date | null): never => {
     const time = at?.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", timeZone: ctx.gym.timezone });
-    throw new CheckInRefused("already_checked_in", `${member.fullName} already checked in today${time ? ` at ${time}` : ""}.`, brief);
+    throw new CheckInRefused("already_checked_in", `${opts.self ? "You" : member.fullName} already checked in today${time ? ` at ${time}` : ""}.`, brief);
   };
   const earlier = await alreadyIn();
   if (earlier) refuseDuplicate(earlier);
@@ -100,7 +139,7 @@ export async function checkIn(tx: Tx, ctx: GymContext, input: z.output<typeof ch
         gymId: ctx.gym.id,
         memberId: member.id,
         checkInDate: today,
-        method: input.qr ? "qr" : "manual",
+        method: opts.method,
         overrideReason: overridden ? input.overrideReason : null,
         recordedByUserId: ctx.user.id,
       })
@@ -118,15 +157,34 @@ export async function checkIn(tx: Tx, ctx: GymContext, input: z.output<typeof ch
     attendanceId: row.id,
     checkInAt: row.checkInAt,
     overridden,
+    batchNote,
     member: {
       ...brief,
       planName: member.current?.planName ?? null,
       validUntil: member.current?.validUntil ?? null,
       daysLeft,
-      duePaise: hasPermission(ctx, "payments.view") ? await duesForMember(tx, ctx, member.id) : 0,
+      duePaise: hasPermission(ctx, "payments.view") || opts.self ? await duesForMember(tx, ctx, member.id) : 0,
     },
   };
 }
+
+/** A member checks themself out by scanning the gym's exit QR. */
+export async function selfCheckOut(tx: Tx, ctx: GymContext) {
+  if (!ctx.memberId) throw forbidden("Only members can check themselves out.");
+  const today = gymToday(ctx);
+  const [visit] = await tx
+    .select()
+    .from(attendance)
+    .where(and(eq(attendance.gymId, ctx.gym.id), eq(attendance.memberId, ctx.memberId), eq(attendance.checkInDate, today)));
+  if (!visit) throw new CheckInRefused("not_checked_in", "You haven't checked in today. Scan the entrance code when you arrive.");
+  if (visit.checkOutAt) {
+    return { status: "already_checked_out" as const, checkInAt: visit.checkInAt, checkOutAt: visit.checkOutAt, minutes: minutesBetween(visit.checkInAt, visit.checkOutAt) };
+  }
+  const [row] = await tx.update(attendance).set({ checkOutAt: new Date() }).where(eq(attendance.id, visit.id)).returning();
+  return { status: "checked_out" as const, checkInAt: row!.checkInAt, checkOutAt: row!.checkOutAt!, minutes: minutesBetween(row!.checkInAt, row!.checkOutAt!) };
+}
+
+const minutesBetween = (a: Date, b: Date) => Math.max(0, Math.round((b.getTime() - a.getTime()) / 60_000));
 
 export async function checkOut(tx: Tx, ctx: GymContext, attendanceId: string) {
   requirePermission(ctx, "attendance.record");
@@ -163,7 +221,8 @@ export async function listDay(tx: Tx, ctx: GymContext, date: ISODate) {
   assertCanView(ctx);
   const result = await tx.execute(sql`
     select a.id, a.check_in_at, a.check_out_at, a.method, a.override_reason, a.member_id,
-      m.full_name, m.member_code, s.full_name as recorded_by
+      m.full_name, m.member_code, s.full_name as recorded_by,
+      (a.recorded_by_user_id is not null and a.recorded_by_user_id = m.user_id) as self_scan
     from attendance a
     join members m on m.id = a.member_id
     left join gym_staff s on s.user_id = a.recorded_by_user_id and s.gym_id = a.gym_id
@@ -179,6 +238,8 @@ export async function listDay(tx: Tx, ctx: GymContext, date: ISODate) {
     method: r.method as "qr" | "manual",
     overrideReason: r.override_reason as string | null,
     recordedBy: r.recorded_by as string | null,
+    /** The member scanned the entrance code themselves. */
+    selfScan: r.self_scan === true,
   }));
 }
 

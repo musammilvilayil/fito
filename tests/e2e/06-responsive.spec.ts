@@ -66,6 +66,8 @@ test("every page fits the screen", async ({ page, baseURL }, info) => {
     ["/payments", "₹2,000"],
     ["/attendance", "Anantha Padmanabhan Vasudevan Nair"],
     ["/attendance/scan", "Start camera"],
+    ["/attendance/codes", "Entrance & exit QR"],
+    ["/equipment", "Add from the catalogue"],
     ["/reports", "Members today"],
     ["/workouts", "Anantha Padmanabhan Vasudevan Nair"],
     ["/workouts/new", "Draft with AI"],

@@ -16,6 +16,7 @@ import { Pool } from "pg";
 import { inGym, resolveGymContext } from "../src/server/auth/context";
 import { resolveSession } from "../src/server/auth/session";
 import { registerGymOwner, acceptInvite } from "../src/server/modules/auth/service";
+import { addEquipment } from "../src/server/modules/equipment/service";
 import { updateGymProfile, updateGymSettings } from "../src/server/modules/gyms/service";
 import { createMember, createMemberInvite, setMemberStatus } from "../src/server/modules/members/service";
 import { freezeMembership, sellMembership } from "../src/server/modules/memberships/service";
@@ -27,14 +28,27 @@ import { addDays, diffDays, todayIn } from "../src/shared/dates";
 import { periodEnd } from "../src/shared/membership";
 import { registerSchema } from "../src/shared/schemas/auth";
 import { freezeSchema, planSchema, recordPaymentSchema, sellMembershipSchema } from "../src/shared/schemas/billing";
-import { EQUIPMENT_OPTIONS, gymProfileSchema, gymSettingsSchema, staffInviteSchema } from "../src/shared/schemas/gym";
+import { equipmentAddSchema } from "../src/shared/schemas/equipment";
+import { gymProfileSchema, gymSettingsSchema, staffInviteSchema } from "../src/shared/schemas/gym";
 import { memberCreateSchema } from "../src/shared/schemas/member";
 import { fitnessProfileSchema } from "../src/shared/schemas/workout";
 
 export const OWNER_EMAIL = "demo.owner@example.com";
 export const TRAINER_EMAIL = "demo.trainer@example.com";
 export const MEMBER_EMAIL = "demo.member@example.com";
+export const DESK_EMAIL = "demo.desk@example.com";
 const DAYS = 60;
+
+/** A mid-size Kochi gym's floor: catalogue keys and how many of each. */
+const DEMO_EQUIPMENT: [string, number][] = [
+  ["treadmill", 6], ["elliptical", 2], ["upright-bike", 3], ["spin-bike", 4], ["rowing-machine", 1], ["stair-climber", 1],
+  ["dumbbells", 24], ["dumbbell-rack", 2], ["olympic-barbell", 4], ["fixed-barbells", 10], ["ez-bar", 2], ["olympic-plates", 60], ["kettlebells", 8], ["medicine-balls", 4],
+  ["flat-bench", 4], ["adjustable-bench", 6], ["incline-bench-press", 1], ["decline-bench", 1], ["power-rack", 2], ["smith-machine", 1], ["preacher-bench", 1], ["dip-station", 1], ["pull-up-bar", 2],
+  ["chest-press", 1], ["pec-deck", 1], ["shoulder-press", 1], ["lat-pulldown", 2], ["seated-row", 1], ["t-bar-row", 1],
+  ["leg-press", 1], ["hack-squat", 1], ["leg-extension", 1], ["seated-leg-curl", 1], ["standing-calf", 1], ["hip-abductor", 1],
+  ["cable-crossover", 1], ["functional-trainer", 1], ["battle-ropes", 1], ["plyo-boxes", 3],
+  ["resistance-bands", 10], ["stability-balls", 4], ["foam-rollers", 6], ["yoga-mats", 15], ["cable-attachments", 12], ["weighing-scale", 1],
+];
 
 /* ------------------------------------------------------------ randomness */
 
@@ -107,14 +121,14 @@ export async function seedDemo(opts: DemoOptions) {
       `delete from users u where (u.id = any($1) or lower(u.email) = any($2))
          and not exists (select 1 from gym_staff s where s.user_id = u.id)
          and not exists (select 1 from members m where m.user_id = u.id)`,
-      [userIds, [OWNER_EMAIL, TRAINER_EMAIL, MEMBER_EMAIL]],
+      [userIds, [OWNER_EMAIL, TRAINER_EMAIL, MEMBER_EMAIL, DESK_EMAIL]],
     );
   } else {
     await q(
       `delete from users u where lower(u.email) = any($1)
          and not exists (select 1 from gym_staff s where s.user_id = u.id)
          and not exists (select 1 from members m where m.user_id = u.id)`,
-      [[OWNER_EMAIL, TRAINER_EMAIL, MEMBER_EMAIL]],
+      [[OWNER_EMAIL, TRAINER_EMAIL, MEMBER_EMAIL, DESK_EMAIL]],
     );
   }
 
@@ -161,7 +175,12 @@ export async function seedDemo(opts: DemoOptions) {
         expiringSoonDays: 7,
         sessionMinutes: 90,
         openingHours: "Mon–Sat 5:00–22:00 · Sun 6:00–11:00",
-        availableEquipment: EQUIPMENT_OPTIONS.filter((e) => e !== "other"),
+        morningStart: "05:00",
+        morningEnd: "11:00",
+        eveningStart: "16:00",
+        eveningEnd: "22:00",
+        batchPolicy: "warn",
+        crowdCapacity: 35,
       }),
     ),
   );
@@ -172,6 +191,16 @@ export async function seedDemo(opts: DemoOptions) {
   );
   const trainerSession = await acceptInvite({ token: invite.inviteUrl.split("/").pop()!, password: opts.password }, null, meta);
   const trainer = await contextFor(trainerSession.token!);
+  const deskInvite = await inGym(owner, (tx) =>
+    inviteStaff(tx, owner, staffInviteSchema.parse({ fullName: "Sneha Joseph", email: DESK_EMAIL, phone: "9000000003", role: "receptionist", specializations: [] })),
+  );
+  const desk = await contextFor((await acceptInvite({ token: deskInvite.inviteUrl.split("/").pop()!, password: opts.password }, null, meta)).token!);
+
+  // The equipment on the floor (this also sets which exercises workout plans may use).
+  for (const [catalogKey, quantity] of DEMO_EQUIPMENT) {
+    await inGym(owner, (tx) => addEquipment(tx, owner, equipmentAddSchema.parse({ catalogKey, quantity })));
+  }
+  owner = await contextFor(reg.token!);
 
   const plans = {} as Record<PlanKey, string>;
   for (const key of Object.keys(PLANS) as PlanKey[]) {
@@ -197,6 +226,7 @@ export async function seedDemo(opts: DemoOptions) {
     fading: boolean;
     perWeek: number;
     slot: "morning" | "evening" | "midday";
+    batch: "morning" | "evening" | "any";
     trainer: boolean;
     id?: string;
   };
@@ -226,12 +256,17 @@ export async function seedDemo(opts: DemoOptions) {
       fading: kind === "existing" && [3, 14, 21, 29, 41, 53].includes(i),
       perWeek: weighted([[2, 15], [3, 30], [4, 25], [5, 20], [6, 10]]),
       slot: weighted([["morning", 55], ["evening", 40], ["midday", 5]]),
+      batch: "any",
       trainer: i % 5 !== 4 && kind !== "enquiry" && people.filter((p) => p.trainer).length < 40,
     });
   }
+  // Batches follow when people train: most morning people are in the morning
+  // batch, most evening people in the evening batch, the rest come any time.
+  // (Drawn after the people, so names and plans stay the same as before batches existed.)
+  for (const p of people) p.batch = p.slot === "midday" || chance(0.12) ? "any" : p.slot;
   // The member whose app is shown in demos: coached, regular, with a plan.
   const demoMember = people.find((p) => p.kind === "new" && p.gender === "female" && p.plan === "quarterly" && !p.churnAfter) ?? people[70]!;
-  Object.assign(demoMember, { trainer: true, perWeek: 4, slot: "morning", joinedOn: addDays(windowStart, 8) });
+  Object.assign(demoMember, { trainer: true, perWeek: 4, slot: "morning", batch: "morning", joinedOn: addDays(windowStart, 8) });
 
   // Members are created oldest first, so member codes follow join order.
   for (const p of [...people].sort((a, b) => (a.joinedOn < b.joinedOn ? -1 : 1))) {
@@ -252,6 +287,7 @@ export async function seedDemo(opts: DemoOptions) {
           notes: p.fading ? "Hasn't been coming lately — call to check in." : chance(0.08) ? pick(["Prefers the morning slot.", "Interested in personal training.", "Referred by a friend."]) : null,
           joinedOn: p.joinedOn,
           assignedTrainerId: p.trainer ? trainer.staffId : null,
+          batch: p.batch,
         }),
       ),
     );
@@ -364,6 +400,7 @@ export async function seedDemo(opts: DemoOptions) {
   const periods = new Map<string, { s: string; e: string; f: string | null }[]>();
   for (const r of ms.rows) periods.set(r.member_id, [...(periods.get(r.member_id) ?? []), { s: r.s, e: r.e, f: r.f }]);
   const ownerUserId = owner.user.id;
+  const memberUserId = (await q(`select user_id from members where id = $1`, [demoMember.id])).rows[0].user_id as string;
   const now = new Date();
   const visits: unknown[][] = [];
   const visitDays = new Map<string, string[]>();
@@ -375,6 +412,8 @@ export async function seedDemo(opts: DemoOptions) {
       const valid = (periods.get(p.id!) ?? []).some((x) => x.s <= d && d <= x.e && !(x.f && d >= x.f));
       if (!valid || (lastFading && d > lastFading)) continue;
       const weekday = new Date(`${d}T00:00:00Z`).getUTCDay();
+      // Sundays are mornings only (6–11), so evening-batch members skip them.
+      if (weekday === 0 && p.batch === "evening") continue;
       let prob = p.perWeek / 6.3;
       if (weekday === 0) prob *= 0.35;
       if (diffDays(p.joinedOn, d) < 21 && p.kind === "new") prob *= 1.15;
@@ -386,7 +425,9 @@ export async function seedDemo(opts: DemoOptions) {
       if (inAt > now) continue;
       const stay = int(45, 110);
       const outAt = new Date(inAt.getTime() + stay * 60_000);
-      visits.push([gymId, p.id, inAt, d, chance(0.7) && outAt < now ? outAt : null, chance(0.86) ? "qr" : "manual", ownerUserId]);
+      const selfScan = p === demoMember;
+      const checkedOut = outAt < now && (selfScan || chance(0.85));
+      visits.push([gymId, p.id, inAt, d, checkedOut ? outAt : null, selfScan || chance(0.86) ? "qr" : "manual", selfScan ? memberUserId : chance(0.8) ? desk.user.id : ownerUserId]);
       visitDays.set(p.id!, [...(visitDays.get(p.id!) ?? []), d]);
     }
   }
@@ -521,7 +562,7 @@ export async function seedDemo(opts: DemoOptions) {
     today,
     days: DAYS,
     demoMemberName: demoMember.name,
-    logins: { owner: OWNER_EMAIL, trainer: TRAINER_EMAIL, member: MEMBER_EMAIL },
+    logins: { owner: OWNER_EMAIL, trainer: TRAINER_EMAIL, desk: DESK_EMAIL, member: MEMBER_EMAIL },
     counts: c as Record<"members" | "memberships" | "payments" | "checkins" | "plans" | "logs" | "weighins", number>,
   };
   } finally {

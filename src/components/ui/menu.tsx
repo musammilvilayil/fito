@@ -12,7 +12,7 @@ export function Menu({ trigger, children, align = "end" }: { trigger: ReactNode;
         <M.Content
           align={align}
           sideOffset={6}
-          className="z-50 min-w-[200px] rounded-xl border border-line bg-panel p-1 shadow-[0_16px_40px_-16px_rgb(29_70_60/0.35)] data-[state=open]:animate-fade-in"
+          className="glass-strong z-50 min-w-[210px] rounded-2xl border p-1.5 data-[state=open]:animate-fade-in"
         >
           {children}
         </M.Content>
@@ -37,8 +37,8 @@ export function MenuItem({
       disabled={disabled}
       onSelect={onSelect}
       className={cn(
-        "flex cursor-pointer items-center gap-2 rounded-lg px-2.5 py-2 text-[13px] outline-none [&_svg]:size-4",
-        danger ? "text-danger data-[highlighted]:bg-danger/10" : "text-ink data-[highlighted]:bg-overlay",
+        "flex cursor-pointer items-center gap-2 rounded-xl px-2.5 py-2 text-[13px] outline-none [&_svg]:size-4",
+        danger ? "text-danger data-[highlighted]:bg-danger/10" : "text-ink data-[highlighted]:bg-[rgb(29_56_50/0.06)]",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       )}
     >

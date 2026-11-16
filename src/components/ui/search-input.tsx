@@ -32,14 +32,14 @@ export function SearchInput({ placeholder, className }: { placeholder: string; c
 
   return (
     <div className={cn("relative", className)}>
-      <Search className={cn("absolute left-3 top-1/2 size-4 -translate-y-1/2", pending ? "text-lime" : "text-ink-subtle")} aria-hidden />
+      <Search className={cn("absolute left-3.5 top-1/2 size-4 -translate-y-1/2", pending ? "text-lime" : "text-ink-subtle")} aria-hidden />
       <input
         type="search"
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder={placeholder}
         aria-label={placeholder}
-        className="h-10 w-full rounded-[10px] border border-line bg-raised pl-9 pr-9 text-sm text-ink placeholder:text-ink-subtle hover:border-line-strong focus:border-lime/70 focus:outline-none focus:ring-2 focus:ring-lime/20 [&::-webkit-search-cancel-button]:hidden"
+        className="h-10 w-full rounded-full border border-[rgb(29_56_50/0.12)] bg-white/70 pl-10 pr-9 text-sm text-ink placeholder:text-ink-subtle hover:border-line-strong focus:border-lime/60 focus:bg-white focus:outline-none focus:ring-4 focus:ring-lime/12 [&::-webkit-search-cancel-button]:hidden"
       />
       {value && (
         <button

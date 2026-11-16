@@ -129,6 +129,11 @@ export type GymSettings = {
   /** Equipment the gym has; AI and templates only use matching exercises. */
   availableEquipment?: string[];
   openingHours?: string | null;
+  /** Batch timings (gym-local "HH:MM") and how strictly check-in follows them. */
+  batches?: { morning: { start: string; end: string }; evening: { start: string; end: string } };
+  batchPolicy?: "off" | "warn" | "enforce";
+  /** About how many people the gym holds comfortably (for the live crowd level). */
+  crowdCapacity?: number;
   /** People can find the gym in the app and join it themselves (default on). */
   allowMemberSignup?: boolean;
   /** Sample data created by scripts/seed-demo.ts for demos. */
@@ -151,10 +156,17 @@ export const gyms = pgTable(
     timezone: text("timezone").notNull().default("Asia/Kolkata"),
     receiptPrefix: text("receipt_prefix").notNull().default("RCPT"),
     settings: jsonb("settings").$type<GymSettings>().notNull().default({}),
+    /** Printed QR codes members scan at the entrance (check in) and exit (check out). */
+    entranceToken: text("entrance_token"),
+    exitToken: text("exit_token"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [uniqueIndex("gyms_slug_key").on(t.slug)],
+  (t) => [
+    uniqueIndex("gyms_slug_key").on(t.slug),
+    uniqueIndex("gyms_entrance_token_key").on(t.entranceToken),
+    uniqueIndex("gyms_exit_token_key").on(t.exitToken),
+  ],
 );
 
 export const gymStaff = pgTable(
@@ -246,6 +258,8 @@ export const members = pgTable(
     healthScreening: jsonb("health_screening").$type<HealthScreening>(),
     medicalClearanceRequired: boolean("medical_clearance_required").notNull().default(false),
     medicalClearanceNote: text("medical_clearance_note"),
+    /** Training batch: morning, evening or any time. */
+    batch: text("batch").notNull().default("any"),
     deactivatedAt: timestamp("deactivated_at", { withTimezone: true }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -708,4 +722,31 @@ export const assistantActions = pgTable(
     decidedAt: timestamp("decided_at", { withTimezone: true }),
   },
   (t) => [index("assistant_actions_thread_idx").on(t.threadId, t.createdAt)],
+);
+
+/* ------------------------------------------------------------ equipment */
+
+/** The gym's equipment: items from the built-in catalogue or custom ones, with quantities. */
+export const gymEquipment = pgTable(
+  "gym_equipment",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    gymId: uuid("gym_id")
+      .notNull()
+      .references(() => gyms.id, { onDelete: "cascade" }),
+    /** Key in src/shared/equipment-catalog.ts, or null for a custom item. */
+    catalogKey: text("catalog_key"),
+    name: text("name").notNull(),
+    /** Exercise-library equipment type it counts as (barbell, machine, ...). */
+    category: text("category").notNull(),
+    group: text("group").notNull(),
+    quantity: integer("quantity").notNull().default(1),
+    notes: text("notes"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex("gym_equipment_name_key").on(t.gymId, sql`lower(${t.name})`),
+    check("gym_equipment_quantity", sql`${t.quantity} between 1 and 999`),
+  ],
 );

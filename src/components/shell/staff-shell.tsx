@@ -3,8 +3,10 @@
 import {
   BarChart3,
   Check,
+  BookOpen,
   ChevronsUpDown,
   CreditCard,
+  Boxes,
   Dumbbell,
   KeyRound,
   LayoutDashboard,
@@ -37,7 +39,8 @@ const ICONS: Record<NavKey, LucideIcon> = {
   payments: CreditCard,
   plans: ListChecks,
   workouts: Dumbbell,
-  exercises: Dumbbell,
+  exercises: BookOpen,
+  equipment: Boxes,
   reports: BarChart3,
   settings: Settings,
 };
@@ -47,10 +50,13 @@ const SECTION_LABELS = { main: null, training: "Training", admin: "Manage" } as 
 export type ShellGym = { gymId: string; gymName: string; roleLabel: string };
 
 /** Small marker on gyms filled with sample data (scripts/seed-demo.ts). */
-export function DemoBadge({ className }: { className?: string }) {
+export function DemoBadge({ className, short = false }: { className?: string; short?: boolean }) {
   return (
-    <span className={cn("shrink-0 rounded-full border border-warning/40 bg-warning/10 px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide text-warning", className)}>
-      Demo data
+    <span
+      className={cn("shrink-0 rounded-full border border-warning/40 bg-warning/10 px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide text-warning", className)}
+      title="This gym is filled with sample data"
+    >
+      {short ? "Demo" : "Demo data"}
     </span>
   );
 }
@@ -90,12 +96,13 @@ export function StaffShell({
   );
 
   return (
-    <div className="min-h-dvh lg:pl-[260px]">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[260px] glass border-r lg:flex lg:flex-col">
+    <div className="min-h-dvh lg:pl-[276px]">
+      {/* Floating glass sidebar on desktop. */}
+      <aside className="glass fixed bottom-3 left-3 top-3 z-30 hidden w-[252px] rounded-[28px] border lg:flex lg:flex-col">
         {sidebar}
       </aside>
 
-      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line bg-canvas/85 px-4 backdrop-blur lg:hidden">
+      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-white/60 bg-white/55 px-4 backdrop-blur-xl lg:hidden">
         <Logo href="/dashboard" size="sm" />
         {demo && <DemoBadge className="ml-auto mr-2" />}
         <button
@@ -109,10 +116,10 @@ export function StaffShell({
 
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Menu">
-          <div className="absolute inset-0 bg-[rgb(20_40_35/0.28)] animate-fade-in" onClick={() => setMobileOpen(false)} />
-          <div className="absolute inset-y-0 left-0 flex w-[84%] max-w-[300px] flex-col border-r border-line bg-panel animate-rise">
+          <div className="absolute inset-0 bg-[rgb(20_40_35/0.22)] backdrop-blur-[4px] animate-fade-in" onClick={() => setMobileOpen(false)} />
+          <div className="glass-strong absolute bottom-2 left-2 top-2 flex w-[84%] max-w-[300px] flex-col rounded-[28px] border animate-rise">
             <button
-              className="absolute right-3 top-3 rounded-lg p-2 text-ink-muted hover:bg-raised"
+              className="absolute right-3 top-3 rounded-full p-2 text-ink-muted hover:bg-white"
               onClick={() => setMobileOpen(false)}
               aria-label="Close menu"
             >
@@ -123,7 +130,7 @@ export function StaffShell({
         </div>
       )}
 
-      <main className="mx-auto w-full max-w-[1280px] px-4 py-6 sm:px-6 lg:px-10 lg:py-9">{children}</main>
+      <main className="mx-auto w-full max-w-[1260px] px-4 py-6 sm:px-6 lg:px-10 lg:py-10">{children}</main>
     </div>
   );
 }
@@ -173,7 +180,7 @@ function SidebarContent({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="px-5 pb-4 pt-5">
+      <div className="px-6 pb-5 pt-6">
         <Logo href="/dashboard" size="sm" />
       </div>
 
@@ -181,15 +188,15 @@ function SidebarContent({
         <Menu
           align="start"
           trigger={
-            <button className="flex w-full items-center gap-3 rounded-xl border border-line bg-raised/70 px-3 py-2.5 text-left hover:border-line-strong">
-              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-lime text-[13px] font-bold text-lime-ink">
+            <button className="flex w-full items-center gap-3 rounded-2xl bg-white/55 px-3 py-2.5 text-left shadow-[0_1px_2px_rgb(29_56_50/0.05)] transition-colors hover:bg-white/80">
+              <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-[linear-gradient(135deg,#1f9d7a,#10735c)] text-[13px] font-bold text-lime-ink">
                 {gymName.slice(0, 1).toUpperCase()}
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[13.5px] font-medium text-ink">{gymName}</span>
-                <span className="flex items-center gap-1.5 text-[11.5px] text-ink-subtle">
+                <span className="flex items-center gap-1.5 whitespace-nowrap text-[11.5px] text-ink-subtle">
                   {roleLabel}
-                  {demo && <DemoBadge />}
+                  {demo && <DemoBadge short className="px-1.5 py-0 leading-4" />}
                 </span>
               </span>
               <ChevronsUpDown className="size-4 shrink-0 text-ink-subtle" />
@@ -225,11 +232,12 @@ function SidebarContent({
                         onClick={onNavigate}
                         aria-current={active ? "page" : undefined}
                         className={cn(
-                          "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13.5px] font-medium transition-colors",
-                          active ? "bg-raised text-ink" : "text-ink-muted hover:bg-raised/60 hover:text-ink",
+                          "group relative flex items-center gap-3 rounded-2xl px-3 py-2.5 text-[13.5px] font-medium transition-[background-color,color,box-shadow]",
+                          active
+                            ? "bg-white/85 text-ink shadow-[0_1px_2px_rgb(29_56_50/0.06),0_8px_18px_-12px_rgb(29_70_60/0.4)]"
+                            : "text-ink-muted hover:bg-white/45 hover:text-ink",
                         )}
                       >
-                        {active && <span className="absolute inset-y-1.5 left-0 w-[3px] rounded-full bg-lime" aria-hidden />}
                         <Icon className={cn("size-[17px]", active ? "text-lime" : "text-ink-subtle group-hover:text-ink-muted")} />
                         {item.label}
                       </Link>
@@ -242,11 +250,11 @@ function SidebarContent({
         )}
       </nav>
 
-      <div className="border-t border-line p-3">
+      <div className="p-3">
         <Menu
           align="start"
           trigger={
-            <button className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left hover:bg-raised">
+            <button className="flex w-full items-center gap-3 rounded-2xl px-2 py-2 text-left hover:bg-white/55">
               <Avatar name={userName} size={32} />
               <span className="min-w-0 flex-1 truncate text-[13px] font-medium">{userName}</span>
               <ChevronsUpDown className="size-4 text-ink-subtle" />

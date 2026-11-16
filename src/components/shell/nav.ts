@@ -9,6 +9,7 @@ export type NavKey =
   | "attendance"
   | "workouts"
   | "exercises"
+  | "equipment"
   | "reports"
   | "settings";
 
@@ -25,12 +26,13 @@ const RULES: Rule[] = [
   { key: "plans", label: "Plans", href: "/plans", section: "main", anyOf: ["plans.manage", "memberships.manage"] },
   { key: "workouts", label: "Workouts", href: "/workouts", section: "training", anyOf: ["workouts.manage"] },
   { key: "exercises", label: "Exercise library", href: "/exercises", section: "training", anyOf: ["workouts.manage"] },
+  { key: "equipment", label: "Equipment", href: "/equipment", section: "training" },
   { key: "reports", label: "Reports", href: "/reports", section: "admin", anyOf: ["reports.view"] },
   { key: "settings", label: "Settings", href: "/settings", section: "admin", anyOf: ["gym.manage", "staff.manage"] },
 ];
 
 /** Modules live in the app so far. Each phase adds its module here. */
-export const ENABLED_MODULES = new Set<NavKey>(["dashboard", "assistant", "members", "attendance", "payments", "plans", "workouts", "exercises", "reports", "settings"]);
+export const ENABLED_MODULES = new Set<NavKey>(["dashboard", "assistant", "members", "attendance", "payments", "plans", "workouts", "exercises", "equipment", "reports", "settings"]);
 
 export function navFor(permissions: ReadonlySet<Permission>): NavItem[] {
   return RULES.filter((r) => ENABLED_MODULES.has(r.key))

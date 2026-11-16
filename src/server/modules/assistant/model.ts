@@ -83,9 +83,10 @@ export function assistantCostMicroUsd(model: string, usage: Anthropic.Beta.BetaU
 const SCRIPT: { match: RegExp; tool: string; input: (text: string) => Record<string, unknown> }[] = [
   { match: /membership|expire|renew|due/i, tool: "get_my_membership", input: () => ({}) },
   { match: /weigh|weight is|i am \d+ ?kg|log .*kg/i, tool: "propose_progress_entry", input: (t) => ({ weightKg: Number(/(\d+(?:\.\d+)?)\s?kg/i.exec(t)?.[1] ?? 70) }) },
+  { match: /busy|crowd|rush|quiet/i, tool: "get_gym_crowd", input: () => ({}) },
   { match: /today|attendance|inside|occupancy/i, tool: "get_today_overview", input: () => ({}) },
   { match: /approv/i, tool: "list_pending_approvals", input: () => ({}) },
-  { match: /hours|open/i, tool: "get_gym_info", input: () => ({}) },
+  { match: /hours|open|equipment|machines/i, tool: "get_gym_info", input: () => ({}) },
 ];
 
 /**

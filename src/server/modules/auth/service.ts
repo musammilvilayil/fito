@@ -79,6 +79,8 @@ export async function registerGymOwner(input: z.output<typeof registerSchema>, m
         phone: input.phone,
         email: input.email,
         receiptPrefix: initials(input.gymName),
+        entranceToken: randomToken(24),
+        exitToken: randomToken(24),
         settings: { expiringSoonDays: 7, sessionMinutes: 90, aiMonthlyLimit: env().AI_MONTHLY_LIMIT_DEFAULT },
       });
       await tx.insert(gymStaff).values({

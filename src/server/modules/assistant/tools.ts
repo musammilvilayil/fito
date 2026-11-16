@@ -2,6 +2,7 @@ import "server-only";
 import type Anthropic from "@anthropic-ai/sdk";
 import { sql } from "drizzle-orm";
 import { z } from "zod";
+import { batchHoursLabel, batchHoursOf } from "@/shared/batches";
 import { addDays, diffDays, formatDate, isISODate, type ISODate } from "@/shared/dates";
 import { STANDING_LABELS, type MemberStanding } from "@/shared/membership";
 import { formatINR } from "@/shared/money";
@@ -10,7 +11,9 @@ import { GOAL_LABELS, exerciseQuery, progressEntrySchema, type FitnessGoal } fro
 import { suggestDay } from "@/shared/workout-schedule";
 import { hasPermission, inGym, type GymContext } from "../../auth/context";
 import { badRequest } from "../../errors";
+import { CROWD_LABELS, gymCrowd } from "../attendance/crowd";
 import { attendanceSummary, memberAttendance } from "../attendance/service";
+import { listEquipment } from "../equipment/service";
 import { searchExercises } from "../exercises/service";
 import { getGymProfile } from "../gyms/service";
 import { listMemberMemberships } from "../memberships/service";
@@ -70,13 +73,15 @@ const gymInfo = tool({
   name: "get_gym_info",
   label: "Looking up gym details",
   description:
-    "The gym's name, contact phone and email, address, opening hours, equipment, and its trainers with their specialisations. Use for questions about timings, location, contact or trainers.",
+    "The gym's name, contact phone and email, address, opening hours, morning/evening batch hours, its equipment list with how many of each, and its trainers with their specialisations. Use for questions about timings, batches, location, contact, equipment or trainers.",
   input: z.object({}),
   personas: ["member", "staff"],
   run: (ctx) =>
     inGym(ctx, async (tx) => {
       const gym = await getGymProfile(tx, ctx);
       const trainers = await listTrainers(tx, ctx);
+      const equipment = await listEquipment(tx, ctx);
+      const batches = batchHoursOf(gym.settings);
       return {
         data: {
           name: gym.name,
@@ -84,8 +89,36 @@ const gymInfo = tool({
           email: gym.email,
           address: [gym.addressLine, gym.city, gym.state, gym.pincode].filter(Boolean).join(", ") || null,
           openingHours: gym.settings.openingHours ?? "Not set by the gym",
-          equipment: gym.settings.availableEquipment ?? [],
+          batches: { morning: batchHoursLabel("morning", batches), evening: batchHoursLabel("evening", batches), rule: gym.settings.batchPolicy ?? "warn" },
+          equipment: equipment.items.length
+            ? equipment.items.map((i) => ({ name: i.name, quantity: i.quantity, area: i.group }))
+            : `No equipment list yet. Exercise types the gym has: ${(gym.settings.availableEquipment ?? []).join(", ") || "not set"}`,
           trainers: trainers.map((t) => ({ name: t.fullName, specialisations: t.specializations })),
+        },
+      };
+    }),
+});
+
+const crowd = tool({
+  name: "get_gym_crowd",
+  label: "Checking how busy the gym is",
+  description:
+    "How many people are in the gym right now (from check-ins and check-outs), how full that is, and the usual number of check-ins per hour on this weekday, with the busiest and a quieter hour later today. Counts only, never names. Use for 'is the gym busy?', 'when is it quiet?' and 'best time to come'.",
+  input: z.object({}),
+  personas: ["member", "staff"],
+  run: (ctx) =>
+    inGym(ctx, async (tx) => {
+      const c = await gymCrowd(tx, ctx);
+      const hour = (h: number) => `${((h + 11) % 12) + 1} ${h < 12 ? "am" : "pm"}`;
+      return {
+        data: {
+          insideNow: c.inside,
+          comfortableCapacity: c.capacity,
+          level: CROWD_LABELS[c.level],
+          hourNow: hour(c.hourNow),
+          usualCheckInsByHour: c.byHour.filter((h) => h.typical > 0).map((h) => ({ hour: hour(h.hour), usual: h.typical, today: h.today })),
+          busiestHours: c.busiestHours.map(hour),
+          quieterLaterToday: c.quietLater === null ? null : hour(c.quietLater),
         },
       };
     }),
@@ -537,6 +570,7 @@ const memberDetails = tool({
 
 export const TOOLS: AnyTool[] = [
   gymInfo,
+  crowd,
   exercises,
   myMembership,
   myPlan,

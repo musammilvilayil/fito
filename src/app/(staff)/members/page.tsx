@@ -1,4 +1,5 @@
 import { FileSpreadsheet, UserPlus, Users } from "lucide-react";
+import { BATCHES, BATCH_LABELS } from "@/shared/batches";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { StandingBadge } from "@/components/members/standing-badge";
@@ -38,6 +39,7 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
     q: typeof sp.q === "string" ? sp.q : undefined,
     status: typeof sp.status === "string" ? sp.status : undefined,
     page: typeof sp.page === "string" ? sp.page : undefined,
+    batch: typeof sp.batch === "string" && (BATCHES as readonly string[]).includes(sp.batch) ? sp.batch : undefined,
   });
   const result = await inGym(ctx, (tx) => listMembers(tx, ctx, query));
   const canManage = hasPermission(ctx, "members.manage");
@@ -45,7 +47,7 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
 
   const href = (patch: Record<string, string | number | undefined>) => {
     const next = new URLSearchParams();
-    const merged = { q: query.q, status: query.status === "all" ? undefined : query.status, page: undefined, ...patch };
+    const merged = { q: query.q, status: query.status === "all" ? undefined : query.status, batch: query.batch, page: undefined, ...patch };
     for (const [k, v] of Object.entries(merged)) {
       if (v === undefined || v === "" || (k === "page" && Number(v) === 1)) continue;
       next.set(k, String(v));
@@ -103,13 +105,32 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
             })}
           </nav>
         </div>
+        <nav className="-mx-1 flex items-center gap-1 overflow-x-auto border-b border-line px-5 py-2.5" aria-label="Filter by batch">
+          <span className="mr-1 shrink-0 text-[12px] font-medium text-ink-subtle">Batch</span>
+          {([undefined, ...BATCHES] as const).map((b) => {
+            const active = query.batch === b;
+            return (
+              <Link
+                key={b ?? "all"}
+                href={href({ batch: b })}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "shrink-0 rounded-full px-3 py-1 text-[12.5px] font-medium transition-colors",
+                  active ? "bg-lime-soft text-lime" : "text-ink-muted hover:bg-raised hover:text-ink",
+                )}
+              >
+                {b ? BATCH_LABELS[b] : "All"}
+              </Link>
+            );
+          })}
+        </nav>
 
         {result.items.length === 0 ? (
           <EmptyState
             icon={Users}
-            title={query.q || query.status !== "all" ? "No members match" : "No members yet"}
+            title={query.q || query.status !== "all" || query.batch ? "No members match" : "No members yet"}
             description={
-              query.q || query.status !== "all"
+              query.q || query.status !== "all" || query.batch
                 ? "Try a different search or filter."
                 : canManage
                   ? "Add members one by one, or import your existing register from Excel or CSV."
@@ -153,7 +174,10 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
                           <Avatar name={m.fullName} size={34} />
                           <span className="min-w-0">
                             <span className="block truncate font-medium group-hover:text-lime">{m.fullName}</span>
-                            <span className="block text-[12px] text-ink-subtle">{m.memberCode}</span>
+                            <span className="block text-[12px] text-ink-subtle">
+                              {m.memberCode}
+                              {m.batch !== "any" && <> · {BATCH_LABELS[m.batch]}</>}
+                            </span>
                           </span>
                         </Link>
                       </TD>
@@ -196,6 +220,7 @@ export default async function MembersPage({ searchParams }: PageProps<"/members"
                       <div className="truncate font-medium">{m.fullName}</div>
                       <div className="mt-0.5 truncate text-[12.5px] text-ink-subtle">
                         {m.memberCode}
+                        {m.batch !== "any" ? ` · ${BATCH_LABELS[m.batch]}` : ""}
                         {m.phone ? ` · ${formatPhone(m.phone)}` : ""}
                       </div>
                     </div>

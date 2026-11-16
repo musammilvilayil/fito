@@ -27,6 +27,7 @@ export const PERMISSIONS = [
   "workouts.manage",
   "workouts.approve",
   "exercises.manage",
+  "equipment.manage",
   "ai.generate",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
@@ -54,6 +55,7 @@ export const ROLE_PERMISSIONS: Record<Role, ReadonlySet<Permission>> = {
     "workouts.manage",
     "workouts.approve",
     "exercises.manage",
+    "equipment.manage",
     "ai.generate",
   ]),
   member: new Set<Permission>(),
@@ -97,5 +99,6 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   "workouts.manage": "Create and edit workout plans",
   "workouts.approve": "Approve workout plans",
   "exercises.manage": "Add custom exercises",
+  "equipment.manage": "Manage the gym's equipment list",
   "ai.generate": "Generate AI workout suggestions",
 };

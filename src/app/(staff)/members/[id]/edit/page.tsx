@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { BATCH_HINTS, batchHoursOf } from "@/shared/batches";
 import { MemberForm } from "@/components/members/member-form";
 import { PageHeader } from "@/components/ui/page";
 import { AccessDenied } from "@/components/ui/states";
@@ -25,6 +26,8 @@ export default async function EditMemberPage({ params }: PageProps<"/members/[id
         gymName={ctx.gym.name}
         trainers={trainers}
         canAssignTrainer={hasPermission(ctx, "members.assign_trainer")}
+        batchHours={batchHoursOf(ctx.gym.settings)}
+        batchHint={BATCH_HINTS[ctx.gym.settings.batchPolicy ?? "warn"]}
         initial={{
           fullName: member.fullName,
           phone: formatPhone(member.phone),
@@ -37,6 +40,7 @@ export default async function EditMemberPage({ params }: PageProps<"/members/[id
           notes: member.notes ?? "",
           joinedOn: member.joinedOn,
           assignedTrainerId: member.assignedTrainerId ?? "",
+          batch: member.batch,
         }}
       />
     </div>

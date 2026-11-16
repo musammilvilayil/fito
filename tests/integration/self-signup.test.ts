@@ -4,6 +4,7 @@ import { resolveSession } from "@/server/auth/session";
 import { AppError } from "@/server/errors";
 import { joinGym, registerMember, searchJoinableGyms } from "@/server/modules/auth/member-signup";
 import { updateGymSettings } from "@/server/modules/gyms/service";
+import { gymSettingsSchema } from "@/shared/schemas/gym";
 import { createMember, getMember } from "@/server/modules/members/service";
 import { listNotifications } from "@/server/modules/notifications/service";
 import { adminPool, meta, newGym, resetDb, uniquePhone } from "../support/db";
@@ -14,7 +15,7 @@ const sessionOf = async (token: string) => (await resolveSession(token))!;
 
 async function closeSignups(ctx: GymContext) {
   await inGym(ctx, (tx) =>
-    updateGymSettings(tx, ctx, { expiringSoonDays: 7, sessionMinutes: 90, openingHours: null, availableEquipment: [], allowMemberSignup: false }),
+    updateGymSettings(tx, ctx, gymSettingsSchema.parse({ expiringSoonDays: 7, sessionMinutes: 90, openingHours: null, allowMemberSignup: false })),
   );
 }
 

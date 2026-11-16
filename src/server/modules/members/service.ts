@@ -1,4 +1,5 @@
 import "server-only";
+import type { Batch } from "@/shared/batches";
 import { and, eq, sql } from "drizzle-orm";
 import type { z } from "zod";
 import { todayIn } from "@/shared/dates";
@@ -41,6 +42,7 @@ export type MemberListItem = {
   email: string | null;
   status: "active" | "inactive";
   joinedOn: string;
+  batch: Batch;
   hasAccount: boolean;
   trainerId: string | null;
   trainerName: string | null;
@@ -67,6 +69,7 @@ export async function listMembers(tx: Tx, ctx: GymContext, query: MemberListQuer
     );
   }
   if (query.trainer) conditions.push(sql`m.assigned_trainer_id = ${query.trainer}`);
+  if (query.batch) conditions.push(sql`m.batch = ${query.batch}`);
   const where = sql.join(conditions, sql` and `);
   const standingFilter = query.status === "all" ? sql`true` : sql`${standing} = ${query.status}`;
 
@@ -75,7 +78,7 @@ export async function listMembers(tx: Tx, ctx: GymContext, query: MemberListQuer
     where ${where}`;
 
   const rowsResult = await tx.execute(sql`
-    select m.id, m.member_code, m.full_name, m.phone, m.email, m.status, m.joined_on,
+    select m.id, m.member_code, m.full_name, m.phone, m.email, m.status, m.joined_on, m.batch,
       m.user_id is not null as has_account, m.assigned_trainer_id, t.full_name as trainer_name,
       cm.plan_name, cm.valid_until, ${standing} as standing
     ${base} and ${standingFilter}
@@ -97,6 +100,7 @@ export async function listMembers(tx: Tx, ctx: GymContext, query: MemberListQuer
     email: r.email as string | null,
     status: r.status as "active" | "inactive",
     joinedOn: String(r.joined_on),
+    batch: r.batch as Batch,
     hasAccount: Boolean(r.has_account),
     trainerId: r.assigned_trainer_id as string | null,
     trainerName: r.trainer_name as string | null,
@@ -135,6 +139,7 @@ export async function getMember(tx: Tx, ctx: GymContext, memberId: string) {
     emergencyContactPhone: r.emergency_contact_phone as string | null,
     joinedOn: String(r.joined_on),
     status: r.status as "active" | "inactive",
+    batch: r.batch as Batch,
     notes: r.notes as string | null,
     hasAccount: Boolean(r.user_id),
     inviteExpiresAt: r.invite_expires_at ? new Date(r.invite_expires_at as string) : null,
@@ -189,7 +194,9 @@ export async function newMemberCode(tx: Tx, gymId: string) {
   return `M${String(await nextCounter(tx, gymId, "member_code")).padStart(4, "0")}`;
 }
 
-export async function createMember(tx: Tx, ctx: GymContext, input: z.output<typeof memberCreateSchema>) {
+type MemberCreateData = Omit<z.output<typeof memberCreateSchema>, "batch"> & { batch?: Batch };
+
+export async function createMember(tx: Tx, ctx: GymContext, input: MemberCreateData) {
   if (!hasPermission(ctx, "members.manage")) {
     // Trainers can add members; the member is assigned to them so they can coach them.
     requirePermission(ctx, "members.add");
@@ -217,6 +224,7 @@ export async function createMember(tx: Tx, ctx: GymContext, input: z.output<type
         notes: input.notes,
         joinedOn: input.joinedOn ?? gymToday(ctx),
         assignedTrainerId: input.assignedTrainerId,
+        batch: input.batch ?? "any",
         qrToken: randomToken(18),
         inviteTokenHash: invite?.tokenHash ?? null,
         inviteExpiresAt: invite?.expiresAt ?? null,
@@ -248,6 +256,7 @@ export async function updateMember(tx: Tx, ctx: GymContext, memberId: string, in
     "emergencyContactPhone",
     "notes",
     "assignedTrainerId",
+    "batch",
   ] as const) {
     if (input[key] !== undefined) (patch as Record<string, unknown>)[key] = input[key];
   }

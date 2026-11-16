@@ -7,7 +7,7 @@ import { api } from "@/lib/api";
 import { fieldError, useApiForm } from "@/lib/use-api-form";
 import { loginSchema } from "@/shared/schemas/auth";
 
-export function LoginForm() {
+export function LoginForm({ next = null }: { next?: string | null }) {
   const router = useRouter();
   const { form, formError, run, errors, submitting } = useApiForm(loginSchema, { identifier: "", password: "" });
 
@@ -19,7 +19,7 @@ export function LoginForm() {
         e.preventDefault();
         void run(async (values) => {
           await api("/auth/login", { body: values });
-          router.replace("/go");
+          router.replace(next ?? "/go");
           router.refresh();
         });
       }}

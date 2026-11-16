@@ -49,6 +49,7 @@ Demo gym ready: ${r.name} (marked as demo data)
 Sign in at /login with password "${args.password}":
   Owner    ${r.logins.owner}   (or 90000 00001)
   Trainer  ${r.logins.trainer} (or 90000 00002)
+  Desk     ${r.logins.desk}    (or 90000 00003, front desk)
   Member   ${r.logins.member}  (${r.demoMemberName}, member app)
 `);
   } finally {

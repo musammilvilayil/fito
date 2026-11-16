@@ -1,4 +1,5 @@
-import { ArrowLeft, CalendarDays, Mail, MapPin, Phone, ShieldAlert, User } from "lucide-react";
+import { ArrowLeft, CalendarDays, Clock, Mail, MapPin, Phone, ShieldAlert, User } from "lucide-react";
+import { BATCH_LABELS, batchHoursLabel, batchHoursOf } from "@/shared/batches";
 import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -272,6 +273,11 @@ export default async function MemberPage({ params }: PageProps<"/members/[id]">)
               <Detail icon={User} label="Gender" value={member.gender ? GENDER_LABELS[member.gender as keyof typeof GENDER_LABELS] : null} />
               <Detail icon={CalendarDays} label="Date of birth" value={member.dateOfBirth ? formatDate(member.dateOfBirth) : null} />
               <Detail icon={CalendarDays} label="Joined" value={formatDate(member.joinedOn)} />
+              <Detail
+                icon={Clock}
+                label="Batch"
+                value={member.batch === "any" ? BATCH_LABELS.any : `${BATCH_LABELS[member.batch]} · ${batchHoursLabel(member.batch, batchHoursOf(ctx.gym.settings))}`}
+              />
               <Detail icon={MapPin} label="Address" value={member.address} />
               <Detail
                 icon={ShieldAlert}

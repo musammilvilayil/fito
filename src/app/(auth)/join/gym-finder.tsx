@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/form";
 import { api, errorMessage } from "@/lib/api";
+import { cn } from "@/lib/cn";
 
 type Gym = { id: string; name: string; city: string | null; state: string; joined: boolean };
 
@@ -15,6 +16,8 @@ export function GymFinder({ backHref }: { backHref: string | null }) {
   const router = useRouter();
   const [q, setQ] = useState("");
   const [gyms, setGyms] = useState<Gym[] | null>(null);
+  // The query the shown gyms answer; while a newer search runs they're dimmed and can't be tapped.
+  const [shownFor, setShownFor] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [joining, setJoining] = useState<string | null>(null);
 
@@ -24,6 +27,7 @@ export function GymFinder({ backHref }: { backHref: string | null }) {
       api<{ gyms: Gym[] }>(`/gyms/search?q=${encodeURIComponent(q)}`, { signal: ctrl.signal })
         .then((d) => {
           setGyms(d.gyms);
+          setShownFor(q);
           setError(null);
         })
         .catch((err) => {
@@ -63,7 +67,10 @@ export function GymFinder({ backHref }: { backHref: string | null }) {
       ) : gyms.length === 0 ? (
         <p className="py-6 text-center text-sm text-ink-muted">No gyms found. Check the spelling, or ask your gym for an invite link.</p>
       ) : (
-        <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-white/60">
+        <ul
+          className={cn("divide-y divide-line overflow-hidden rounded-2xl border border-line bg-white/60 transition-opacity", shownFor !== q && "pointer-events-none opacity-50")}
+          aria-busy={shownFor !== q}
+        >
           {gyms.map((g) => (
             <li key={g.id} className="flex items-center gap-3 px-4 py-3">
               <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-lime-soft text-[15px] font-bold text-lime">{g.name.slice(0, 1).toUpperCase()}</span>

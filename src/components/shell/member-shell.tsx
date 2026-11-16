@@ -61,7 +61,7 @@ export function MemberShell({
 
   return (
     <div className="min-h-dvh pb-[calc(96px+env(safe-area-inset-bottom))] md:pb-10">
-      <header className="sticky top-0 z-30 border-b border-line bg-canvas/85 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b border-white/60 bg-white/50 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-3xl items-center gap-3 px-4">
           <Logo href="/me" size="sm" />
           <span className="min-w-0 flex-1 truncate border-l border-line pl-3 text-[13px] text-ink-muted">{gymName}</span>
@@ -69,7 +69,7 @@ export function MemberShell({
           <Link
             href="/me#updates"
             aria-label={unread ? `Updates (${unread} unread)` : "Updates"}
-            className="relative grid size-9 place-items-center rounded-lg text-ink-muted hover:bg-raised hover:text-ink"
+            className="relative grid size-9 place-items-center rounded-full text-ink-muted hover:bg-white hover:text-ink"
           >
             <Bell className="size-[18px]" />
             {unread > 0 && (
@@ -109,19 +109,18 @@ export function MemberShell({
             </MenuItem>
           </Menu>
         </div>
-        <nav aria-label="Member" className="mx-auto hidden max-w-3xl gap-1 px-3 md:flex">
+        <nav aria-label="Member" className="mx-auto hidden max-w-3xl gap-1 px-4 pb-2.5 md:flex">
           {TABS.map((t) => (
             <Link
               key={t.href}
               href={t.href}
               aria-current={isActive(t) ? "page" : undefined}
               className={cn(
-                "relative px-3.5 pb-3 pt-1 text-[13.5px] font-medium transition-colors",
-                isActive(t) ? "text-ink" : "text-ink-muted hover:text-ink",
+                "rounded-full px-4 py-1.5 text-[13.5px] font-medium transition-colors",
+                isActive(t) ? "bg-white text-ink shadow-[0_1px_2px_rgb(29_56_50/0.08),0_4px_12px_-6px_rgb(29_70_60/0.3)]" : "text-ink-muted hover:bg-white/50 hover:text-ink",
               )}
             >
               {t.label}
-              {isActive(t) && <span className="absolute inset-x-2 -bottom-px h-[2px] rounded-full bg-lime" aria-hidden />}
             </Link>
           ))}
         </nav>
@@ -131,7 +130,7 @@ export function MemberShell({
 
       <nav
         aria-label="Member tabs"
-        className="glass fixed inset-x-3 bottom-[calc(10px+env(safe-area-inset-bottom))] z-30 rounded-[22px] border md:hidden"
+        className="glass-strong fixed inset-x-3 bottom-[calc(10px+env(safe-area-inset-bottom))] z-30 rounded-[26px] border md:hidden"
       >
         <ul className="mx-auto grid max-w-md grid-cols-5 p-1.5">
           {TABS.map((t) => {
@@ -142,7 +141,7 @@ export function MemberShell({
                   href={t.href}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "flex h-[54px] flex-col items-center justify-center gap-0.5 rounded-2xl text-[11px] font-medium transition-colors",
+                    "flex h-[54px] flex-col items-center justify-center gap-0.5 rounded-[20px] text-[11px] font-medium transition-colors",
                     active ? "bg-lime-soft text-lime" : "text-ink-subtle",
                   )}
                 >

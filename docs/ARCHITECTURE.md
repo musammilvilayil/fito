@@ -56,6 +56,9 @@ Browser (owner / trainer / member)      Future Expo Android app
 * Steps that happen before a user is known (login lookup, session lookup,
   invite lookup, password reset, rate limiting) use narrow
   `SECURITY DEFINER` functions that return only what that step needs.
+  The same applies to finding a gym to join (`fito_search_gyms`) and to the
+  door QR (`fito_scan_gym`), which returns only the gym id and "in" or
+  "out"; the check-in itself then runs as the signed-in member, under RLS.
 * `tests/integration/tenancy.test.ts` fails if any table lacks RLS or a
   `gym_id` table lacks a policy.
 

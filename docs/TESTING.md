@@ -1,6 +1,6 @@
 # Testing report
 
-_Last full run: 15 November 2026, on the `fito-web-mvp` branch (after adding the AI assistant)._
+_Last full run: 17 November 2026, on the `fito-web-mvp` branch (after adding the door QR, crowd, batches, equipment and the glass redesign)._
 
 ## Results
 
@@ -8,16 +8,18 @@ _Last full run: 15 November 2026, on the `fito-web-mvp` branch (after adding the
 |---|---|---|
 | TypeScript (strict) | `npm run typecheck` | No errors |
 | Lint | `npm run lint` | No errors or warnings |
-| Unit + integration | `npm test` | **109 passed**, 1 skipped (14 files) |
-| End-to-end, desktop + Pixel 7 | `npm run test:e2e` | **26 passed**, 2 skipped (14 scenarios × 2 devices) |
+| Unit + integration | `npm test` | **117 passed**, 1 skipped (16 files) |
+| End-to-end, desktop + Pixel 7 | `npm run test:e2e` | **35 passed**, 3 skipped (19 scenarios × 2 devices) |
+| Role-by-role walkthrough | script, see "Checked by hand" | 54 screenshots, no console, JavaScript or server errors, no sideways scrolling |
 | Production dependencies | `npm audit --omit=dev` | 0 known vulnerabilities |
 | All dependencies | `npm audit` | 12 moderate, all in dev-only tooling (drizzle-kit's bundled esbuild, typescript-eslint's minimatch). Not shipped to users. |
 
 The skips are intentional:
 * `receipt-render.test.ts` writes a sample receipt PDF for visual review. It
   only runs when asked to.
-* The camera check-in test runs once (desktop). Chromium's fake camera is the
-  same on both device profiles.
+* The camera tests (front-desk scanner, and the member's scanner reading the
+  entrance poster) run once (desktop). Chromium's fake camera is the same on
+  both device profiles.
 * The security spec runs once (desktop). It tests the HTTP API, which
   doesn't depend on the device.
 
@@ -70,7 +72,13 @@ npm run test:e2e -- --trace off
 | Security through the HTTP API: no session, CSRF, member vs staff, member vs member, trainer scope, cross-gym and `X-Gym-Id`, Bearer tokens and logout, SQL injection and XSS input, login throttling, headers and cookies | `tenancy`, `auth` | 08 |
 | Demo seed: one flagged demo gym; realistic mix of statuses, dues and plans; check-ins only on valid membership days and never in the future; gap-free receipts per financial year; demo member login with a plan; re-run replaces it and other gyms are untouched | `demo-seed` | (none) |
 | AI assistant: role-based tools, a model asking for tools outside the role, invalid tool input, exact append-only replay (thinking blocks, stable system prompt and tools), confirm-before-save, privacy between users and from the owner, refusals, provider failures, model or tool changes starting a new chat, monthly limits, usage logging | `assistant` | 09 |
-| Layout: no page scrolls sideways on desktop or phone, with long real-world names | (none) | 06, plus checks in 04, 05, 07 and 09 |
+| Entrance and exit QR: check in and out by scanning, signed-out sign-in and return, once a day, check-out before check-in, other gyms, staff, expired members, replacing codes, camera scan in the member app | `gym-ops` | 11 |
+| Gym right now: people inside, capacity level, usual busy hours, no names, assistant tool | `gym-ops` | 11 |
+| Batches: warn, enforce with owner override, "any time", member form, list filter, profile, settings | `gym-ops`, `demo-seed` | 11 |
+| Equipment: catalogue and custom items, quantities, duplicates, trainer can manage, front desk and members view only, workout equipment kept in step | `gym-ops` | 11 |
+| Front-desk search never shows the previous person's results while a new search loads | (none) | 11 |
+| Sign-in return path only to this site (`?next=`) | `safe-next` (unit) | 11 |
+| Layout: no page scrolls sideways on desktop or phone, with long real-world names | (none) | 06, plus checks in 04, 05, 07, 09 and 11 |
 
 ## Problems the tests caught (all fixed)
 
@@ -94,6 +102,17 @@ npm run test:e2e -- --trace off
 * Several pages ran queries concurrently on one transaction (deprecated by
   the Postgres driver and rejected in its next major version).
 * Local setup didn't load the exercise library.
+* (Walkthrough) The front-desk scanner kept showing the previous search's
+  results, with their "Check in" buttons, until a new search returned, so a
+  quick tap could check in the wrong person.
+* (Walkthrough) The member home logged a React hydration error: the crowd
+  card's time was formatted in the server's time zone and then the phone's.
+* (Walkthrough) Check-in refusals showed raw dates ("2026-10-02"); the
+  receipt-prefix hint always said "IPF"; the checkbox tick was dark on dark
+  green; "Front desk" wrapped beside the demo badge; a settings drop-down was
+  cut off; and on phones the equipment form pushed the list far down.
+* The demo-data test assumed there were check-ins "today", which isn't true
+  before the gym opens at 5 am.
 
 ## Checked by hand
 
@@ -101,13 +120,20 @@ npm run test:e2e -- --trace off
   including the progress chart's tooltip and end label.
 * The overflow measurement script used for the phone-layout bug (element
   edges compared against the 412px screen width).
+* A role-by-role walkthrough of the demo gym on a production build, signed
+  in as owner, front desk, trainer and member (desktop and Pixel 7). It adds
+  and changes equipment, checks members in by name (batch warnings, frozen
+  and expired refusals), scans the entrance and exit codes as a member,
+  asks the assistant, and records console errors, JavaScript errors,
+  server errors and sideways scrolling on every page. The final run had
+  none. It ran at night, so check-ins were outside batch hours.
 
 ## Not tested yet
 
 | Gap | Why | What to do |
 |---|---|---|
 | A live Claude API call (workout drafts and the assistant) | No API key could be used in this environment. Both are tested with stand-in models (valid, invalid, refused and failing responses). | Set `ANTHROPIC_API_KEY` on staging. Run **Settings → AI → Test connection**, then one AI draft and a few assistant questions as a member and as the owner. |
-| Real phones and iOS Safari | Only Chromium device emulation is installed here. | Try check-in scanning and the member portal on one Android and one iPhone before the pilot. |
+| Real phones and iOS Safari | Only Chromium device emulation is installed here. | Try check-in scanning, the printed entrance and exit posters, and the member portal on one Android and one iPhone before the pilot. |
 | Screen-reader and automated accessibility audit | Not run. Components use labelled controls, focus rings and keyboard-reachable charts, but no axe/Lighthouse pass was done. | Run Lighthouse accessibility on the main pages. |
 | Load | Not run. | Pilot scale (one or two gyms of 200–400 members) is well within one small server or serverless deployment. Load-test before onboarding many gyms. |
 | Payment gateway, SMS and email delivery | Not built (see `STATUS.md`). | Not applicable. |

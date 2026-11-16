@@ -1,4 +1,4 @@
-import { Activity, DoorOpen, ScanLine, TrendingUp } from "lucide-react";
+import { Activity, DoorOpen, QrCode, ScanLine, TrendingUp } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -35,12 +35,21 @@ export default async function AttendancePage({ searchParams }: PageProps<"/atten
         title="Attendance"
         description="Who came in, and when."
         actions={
-          canRecord && (
-            <Button asChild size="lg">
-              <Link href="/attendance/scan">
-                <ScanLine /> Open check-in scanner
-              </Link>
-            </Button>
+          (canRecord || hasPermission(ctx, "gym.manage")) && (
+            <>
+              <Button asChild size="lg" variant="secondary">
+                <Link href="/attendance/codes">
+                  <QrCode /> Entrance &amp; exit QR
+                </Link>
+              </Button>
+              {canRecord && (
+                <Button asChild size="lg">
+                  <Link href="/attendance/scan">
+                    <ScanLine /> Open check-in scanner
+                  </Link>
+                </Button>
+              )}
+            </>
           )
         }
       />
@@ -99,7 +108,7 @@ export default async function AttendancePage({ searchParams }: PageProps<"/atten
                   <TD className="tabular text-[13px] text-ink-muted">{r.checkOutAt ? formatTime(r.checkOutAt, tz) : "—"}</TD>
                   <TD className="hidden md:table-cell">
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <Badge tone={r.method === "qr" ? "lime" : "neutral"}>{r.method === "qr" ? "QR" : "Manual"}</Badge>
+                      <Badge tone={r.method === "qr" ? "lime" : "neutral"}>{r.selfScan ? "Door QR" : r.method === "qr" ? "QR" : "Manual"}</Badge>
                       {r.overrideReason && <Badge tone="warning">Override: {r.overrideReason}</Badge>}
                       {r.recordedBy && <span className="text-[12px] text-ink-subtle">by {r.recordedBy}</span>}
                     </div>

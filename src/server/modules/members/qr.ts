@@ -11,3 +11,8 @@ export async function memberQrSvg(qrToken: string): Promise<string> {
     color: { dark: "#111418", light: "#ffffff" },
   });
 }
+
+/** Any text (for example a URL) as a QR code SVG. */
+export async function qrSvg(text: string): Promise<string> {
+  return QRCode.toString(text, { type: "svg", errorCorrectionLevel: "M", margin: 2, color: { dark: "#111418", light: "#ffffff" } });
+}

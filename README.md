@@ -19,7 +19,8 @@ PostgreSQL. Each gym's data is isolated by Postgres row-level security.
 
 * **Owners and managers:** dashboard, members, memberships, payments and
   receipts, staff and roles, reports, settings.
-* **Front desk:** members, selling and renewing, payments, QR check-in.
+* **Front desk:** members, selling and renewing, payments, QR check-in, and
+  the printable entrance and exit QR posters.
 * **Trainers:** their assigned members, fitness profiles and health
   screening, AI or template workout plans they review and approve, the
   exercise library.
@@ -30,6 +31,16 @@ PostgreSQL. Each gym's data is isolated by Postgres row-level security.
   join more gyms and switch between them. Gyms can turn off app sign-ups in
   Settings.
 * **Trainers** can also add members; those members are assigned to them.
+* **At the gym door:** members check themselves in by scanning the
+  **entrance QR** and out by scanning the **exit QR** (phone camera or the
+  app's scanner). From anywhere, members see **how busy the gym is right
+  now** and the usual busy hours.
+* **Batches:** each member is in the morning batch, the evening batch or
+  "any time". The gym sets the hours and whether check-ins outside the batch
+  are allowed with a warning, refused, or ignored.
+* **Equipment:** owners, managers and trainers search a catalogue of about
+  110 items, add what the gym has and set how many. Everyone in the gym can
+  see the list, and workout plans only use exercises for that equipment.
 * **AI assistant:** "Ask FITO" for members and an admin assistant for staff.
   It answers from the data the person's role can see, and changes nothing
   without their confirmation. It needs `ANTHROPIC_API_KEY` on the server; see
@@ -158,11 +169,13 @@ npm run db:seed-demo
 ```
 
 This creates **FITO Demo Gym**, marked with a "Demo data" badge in the app. It has:
-* an owner and one trainer;
+* an owner, one trainer and a front-desk login;
 * 100 fictional members;
 * about two months of history: memberships, renewals, payments with receipts,
   dues, freezes, expiring and lapsed members, check-ins with morning and
-  evening peaks, trainer-approved workout plans, workout logs and weigh-ins.
+  evening peaks, trainer-approved workout plans, workout logs and weigh-ins;
+* morning and evening batches (check-ins follow each member's batch), most
+  visits checked out at the exit, and an equipment list of 45 items.
 
 Dates are relative to the day you run it, so run it again before a demo. That
 replaces the old demo gym; gyms without the demo flag are never touched.
@@ -173,6 +186,7 @@ Sign in with password `demo1234`:
 |---|---|
 | Owner | `demo.owner@example.com` |
 | Trainer | `demo.trainer@example.com` |
+| Front desk | `demo.desk@example.com` |
 | Member | `demo.member@example.com` (member app) |
 
 Options: `npm run db:seed-demo -- --name "Your Gym Name" --owner "Owner Name" --password "a-long-password"`.

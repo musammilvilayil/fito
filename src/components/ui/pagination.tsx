@@ -17,7 +17,7 @@ export function Pagination({
   if (pages <= 1) return null;
   const from = (page - 1) * pageSize + 1;
   const to = Math.min(total, page * pageSize);
-  const btn = "inline-flex h-8 items-center gap-1 rounded-lg border border-line px-2.5 text-[13px] text-ink-muted hover:bg-raised hover:text-ink";
+  const btn = "inline-flex h-8 items-center gap-1 rounded-full border border-white/80 bg-white/60 px-3 text-[13px] text-ink-muted hover:bg-white hover:text-ink";
   return (
     <div className="flex items-center justify-between gap-3 border-t border-line px-5 py-3 text-[13px] text-ink-muted">
       <span className="tabular">

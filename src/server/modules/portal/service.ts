@@ -28,6 +28,7 @@ export function selfView(m: MemberDetail) {
     trainerName: m.trainerName,
     standing: m.standing,
     current: m.current,
+    batch: m.batch,
     fitness: m.fitness,
   };
 }

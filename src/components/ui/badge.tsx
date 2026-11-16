@@ -2,12 +2,12 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 const tones = {
-  neutral: "bg-overlay text-ink-muted border-line-strong",
-  lime: "bg-lime-soft text-lime border-lime/30",
-  success: "bg-success/12 text-success border-success/30",
-  warning: "bg-warning/12 text-warning border-warning/30",
-  danger: "bg-danger/12 text-danger border-danger/30",
-  info: "bg-info/12 text-info border-info/30",
+  neutral: "bg-[rgb(29_56_50/0.07)] text-ink-muted",
+  lime: "bg-lime-soft text-lime",
+  success: "bg-success/12 text-success",
+  warning: "bg-warning/12 text-warning",
+  danger: "bg-danger/10 text-danger",
+  info: "bg-info/10 text-info",
 } as const;
 
 export type BadgeTone = keyof typeof tones;
@@ -16,7 +16,7 @@ export function Badge({ tone = "neutral", children, className, dot }: { tone?: B
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-0.5 text-[11.5px] font-medium leading-5",
+        "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11.5px] font-medium leading-5",
         tones[tone],
         className,
       )}

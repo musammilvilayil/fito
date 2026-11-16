@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { BATCHES } from "../batches";
 import { MEMBER_STANDINGS } from "../membership";
 import {
   isoDate,
@@ -34,6 +35,7 @@ export const memberFields = {
   emergencyContactName: optionalText(120),
   emergencyContactPhone: optionalPhoneField,
   notes: optionalText(2000),
+  batch: z.enum(BATCHES).default("any"),
 };
 
 export const memberCreateSchema = z.object({
@@ -50,6 +52,8 @@ export type MemberCreateInput = z.input<typeof memberCreateSchema>;
 
 export const memberUpdateSchema = memberCreateSchema.partial().extend({
   fullName: requiredText("Name", 120).optional(),
+  // No default here: leaving it out keeps the member's batch.
+  batch: z.enum(BATCHES).optional(),
 });
 export type MemberUpdateInput = z.input<typeof memberUpdateSchema>;
 
@@ -70,6 +74,7 @@ export const memberListQuery = pagination.extend({
   q: z.string().trim().max(100).optional(),
   status: z.enum(MEMBER_FILTERS).default("all"),
   trainer: z.uuid().optional(),
+  batch: z.enum(BATCHES).optional(),
 });
 export type MemberListQuery = z.output<typeof memberListQuery>;
 

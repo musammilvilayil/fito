@@ -9,6 +9,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Field, FormError, Input, Select, Textarea } from "@/components/ui/form";
 import { api } from "@/lib/api";
 import { fieldError, useApiForm } from "@/lib/use-api-form";
+import { BATCHES, BATCH_LABELS, batchHoursLabel, type BatchHours } from "@/shared/batches";
 import { normalizePhone } from "@/shared/phone";
 import { GENDERS, GENDER_LABELS, memberCreateSchema, type MemberCreateInput } from "@/shared/schemas/member";
 
@@ -19,6 +20,8 @@ export function MemberForm({
   trainers,
   canAssignTrainer,
   gymName,
+  batchHours,
+  batchHint,
 }: {
   mode: "create" | "edit";
   memberId?: string;
@@ -26,6 +29,8 @@ export function MemberForm({
   trainers: { id: string; fullName: string }[];
   canAssignTrainer: boolean;
   gymName: string;
+  batchHours: BatchHours;
+  batchHint?: string;
 }) {
   const router = useRouter();
   const { form, formError, run, errors, submitting } = useApiForm(memberCreateSchema, initial);
@@ -93,6 +98,16 @@ export function MemberForm({
           <CardBody className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Joined on" htmlFor="joinedOn" error={fieldError(errors, "joinedOn")} hint="Defaults to today">
               <Input id="joinedOn" type="date" {...reg("joinedOn")} />
+            </Field>
+            <Field label="Batch" htmlFor="batch" error={fieldError(errors, "batch")} hint={batchHint}>
+              <Select id="batch" {...reg("batch")}>
+                {BATCHES.map((b) => (
+                  <option key={b} value={b}>
+                    {BATCH_LABELS[b]}
+                    {b !== "any" ? ` (${batchHoursLabel(b, batchHours)})` : ""}
+                  </option>
+                ))}
+              </Select>
             </Field>
             {canAssignTrainer && (
               <Field label="Trainer" htmlFor="assignedTrainerId" error={fieldError(errors, "assignedTrainerId")}>

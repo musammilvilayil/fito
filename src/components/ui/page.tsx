@@ -14,11 +14,11 @@ export function PageHeader({
   eyebrow?: ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
+    <div className="mb-6 flex flex-col gap-4 sm:mb-9 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
         {eyebrow && <div className="mb-1.5 text-[12px] font-medium uppercase tracking-[0.12em] text-lime">{eyebrow}</div>}
-        <h1 className="text-[22px] font-semibold tracking-tight text-ink sm:text-[26px]">{title}</h1>
-        {description && <p className="mt-1 text-sm text-ink-muted">{description}</p>}
+        <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.025em] text-ink sm:text-[32px]">{title}</h1>
+        {description && <p className="mt-1.5 max-w-2xl text-[14.5px] text-ink-muted">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </div>
@@ -41,25 +41,26 @@ export function StatCard({
   className?: string;
 }) {
   return (
-    <div className={cn("relative overflow-hidden glass rounded-[var(--radius-card)] border p-4 sm:p-5", className)}>
+    <div className={cn("relative min-w-0 overflow-hidden glass rounded-[var(--radius-card)] border p-4 sm:p-5", className)}>
       <div className="flex items-center justify-between gap-2">
         <span className="text-[12.5px] font-medium text-ink-muted">{label}</span>
         {Icon && (
-          <Icon
+          <span
             className={cn(
-              "size-4",
-              tone === "lime" && "text-lime",
-              tone === "warning" && "text-warning",
-              tone === "danger" && "text-danger",
-              tone === "default" && "text-ink-subtle",
+              "grid size-8 shrink-0 place-items-center rounded-full",
+              tone === "lime" && "bg-lime-soft text-lime",
+              tone === "warning" && "bg-warning/12 text-warning",
+              tone === "danger" && "bg-danger/10 text-danger",
+              tone === "default" && "bg-[rgb(29_56_50/0.06)] text-ink-subtle",
             )}
             aria-hidden
-          />
+          >
+            <Icon className="size-4" />
+          </span>
         )}
       </div>
-      <div className="tabular mt-2.5 text-[26px] font-semibold leading-none tracking-tight text-ink sm:text-[28px]">{value}</div>
-      {hint && <div className="mt-2 text-[12px] text-ink-subtle">{hint}</div>}
-      {tone === "lime" && <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-lime/60 to-transparent" aria-hidden />}
+      <div className="tabular mt-3 text-[28px] font-semibold leading-none tracking-[-0.02em] text-ink sm:text-[32px]">{value}</div>
+      {hint && <div className="mt-2 truncate text-[12px] text-ink-subtle">{hint}</div>}
     </div>
   );
 }

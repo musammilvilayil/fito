@@ -5,7 +5,8 @@ import { createMember } from "@/server/modules/members/service";
 import { duesTotal } from "@/server/modules/payments/service";
 import { getMemberOverview } from "@/server/modules/reports/dashboard";
 import { activePlanFor } from "@/server/modules/workouts/service";
-import { MEMBER_EMAIL, OWNER_EMAIL, seedDemo } from "../../scripts/demo-seed";
+import { addDays } from "@/shared/dates";
+import { DESK_EMAIL, MEMBER_EMAIL, OWNER_EMAIL, seedDemo } from "../../scripts/demo-seed";
 import { adminPool, contextFor, meta, newGym, resetDb, uniquePhone } from "../support/db";
 
 const opts = () => ({ name: "Test Demo Gym", owner: "Arun Kumar", password: "demo1234", adminUrl: process.env.TEST_DATABASE_ADMIN_URL! });
@@ -26,12 +27,12 @@ describe("demo data seed", () => {
     owner = await contextFor((await login({ identifier: OWNER_EMAIL, password: "demo1234" }, meta)).token);
   }, 120_000);
 
-  it("creates one flagged demo gym with an owner, a trainer and 100 members", async () => {
+  it("creates one flagged demo gym with an owner, a trainer, a front desk and 100 members", async () => {
     expect(first.counts.members).toBe(100);
     expect(owner.gym.id).toBe(first.gymId);
     expect(owner.gym.settings.demo).toBe(true);
     const staff = await q(`select role from gym_staff where gym_id = $1 order by role`, [first.gymId]);
-    expect(staff.rows.map((r) => r.role)).toEqual(["owner", "trainer"]);
+    expect(staff.rows.map((r) => r.role)).toEqual(["owner", "trainer", "receptionist"]);
     expect(first.counts.memberships).toBeGreaterThan(150);
     expect(first.counts.checkins).toBeGreaterThan(1500);
     expect(first.counts.plans).toBe(28);
@@ -68,7 +69,31 @@ describe("demo data seed", () => {
     );
     expect(bad.rows[0].n).toBe(0);
     const span = await q(`select min(check_in_date)::text as first, max(check_in_date)::text as last from attendance where gym_id = $1`, [first.gymId]);
-    expect(span.rows[0].last).toBe(first.today);
+    // Up to today, or yesterday when this runs before the gym opens (it opens at 5 am).
+    expect([first.today, addDays(first.today, -1)]).toContain(span.rows[0].last);
+  });
+
+  it("keeps morning-batch members in the morning and evening-batch members in the evening", async () => {
+    const batches = await q(`select batch, count(*)::int as n from members where gym_id = $1 group by 1 order by 1`, [first.gymId]);
+    const n = Object.fromEntries(batches.rows.map((r) => [r.batch, r.n]));
+    expect(n.morning).toBeGreaterThan(30);
+    expect(n.evening).toBeGreaterThan(20);
+    expect(n.any).toBeGreaterThan(0);
+    const outside = await q(
+      `select count(*)::int as n from attendance a join members m on m.id = a.member_id
+       where a.gym_id = $1 and (
+         (m.batch = 'morning' and (a.check_in_at at time zone 'Asia/Kolkata')::time not between '05:00' and '11:00')
+         or (m.batch = 'evening' and (a.check_in_at at time zone 'Asia/Kolkata')::time not between '16:00' and '22:00'))`,
+      [first.gymId],
+    );
+    expect(outside.rows[0].n).toBe(0);
+    const out = await q(`select avg((check_out_at is not null)::int)::float as share from attendance where gym_id = $1 and check_in_date < $2::date`, [first.gymId, first.today]);
+    expect(out.rows[0].share).toBeGreaterThan(0.75);
+    const equipment = await q(`select count(*)::int as n, sum(quantity)::int as pieces from gym_equipment where gym_id = $1`, [first.gymId]);
+    expect(equipment.rows[0].n).toBeGreaterThan(30);
+    expect(equipment.rows[0].pieces).toBeGreaterThan(200);
+    const desk = await login({ identifier: DESK_EMAIL, password: "demo1234" }, { ...meta, ip: "desk-login" });
+    expect((await contextFor(desk.token)).role).toBe("receptionist");
   });
 
   it("numbers receipts per financial year, in payment order, without gaps", async () => {
@@ -102,7 +127,7 @@ describe("demo data seed", () => {
     const demoGyms = await q(`select id from gyms where settings->>'demo' = 'true'`);
     expect(demoGyms.rows.map((r) => r.id)).toEqual([again.gymId]);
     const demoUsers = await q(`select count(*)::int as n from users where email like 'demo.%@example.com'`);
-    expect(demoUsers.rows[0].n).toBe(3);
+    expect(demoUsers.rows[0].n).toBe(4);
     const real = await q(`select count(*)::int as n from members where gym_id = $1`, [realGym.gym.id]);
     expect(real.rows[0].n).toBe(1);
   }, 120_000);

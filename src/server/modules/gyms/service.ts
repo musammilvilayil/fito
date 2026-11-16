@@ -1,4 +1,5 @@
 import "server-only";
+import { DEFAULT_BATCH_HOURS } from "@/shared/batches";
 import { eq } from "drizzle-orm";
 import type { z } from "zod";
 import type { gymProfileSchema, gymSettingsSchema } from "@/shared/schemas/gym";
@@ -28,7 +29,21 @@ export async function updateGymProfile(tx: Tx, ctx: GymContext, input: z.output<
 export async function updateGymSettings(tx: Tx, ctx: GymContext, input: z.output<typeof gymSettingsSchema>) {
   requirePermission(ctx, "gym.manage");
   const current = await getGymProfile(tx, ctx);
-  const settings: GymSettings = { ...current.settings, ...input };
+  const settings: GymSettings = {
+    ...current.settings,
+    expiringSoonDays: input.expiringSoonDays,
+    sessionMinutes: input.sessionMinutes,
+    openingHours: input.openingHours,
+    allowMemberSignup: input.allowMemberSignup,
+    batches: {
+      morning: { start: input.morningStart ?? DEFAULT_BATCH_HOURS.morning.start, end: input.morningEnd ?? DEFAULT_BATCH_HOURS.morning.end },
+      evening: { start: input.eveningStart ?? DEFAULT_BATCH_HOURS.evening.start, end: input.eveningEnd ?? DEFAULT_BATCH_HOURS.evening.end },
+    },
+    batchPolicy: input.batchPolicy ?? "warn",
+    crowdCapacity: input.crowdCapacity ?? 40,
+    // The Equipment page keeps this in step with the equipment list.
+    ...(input.availableEquipment ? { availableEquipment: input.availableEquipment } : {}),
+  };
   const [gym] = await tx
     .update(gyms)
     .set({ settings, updatedAt: new Date() })

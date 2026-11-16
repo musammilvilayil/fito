@@ -1,4 +1,5 @@
 import { Download, KeyRound } from "lucide-react";
+import { BATCH_LABELS, batchHoursLabel, batchHoursOf } from "@/shared/batches";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { FitnessProfileCard } from "@/components/workouts/fitness-profile-card";
@@ -54,6 +55,10 @@ export default async function MemberProfilePage() {
             <Item label="Email" value={member.email} />
             <Item label="Date of birth" value={member.dateOfBirth ? formatDate(member.dateOfBirth) : null} />
             <Item label="Trainer" value={member.trainerName} />
+            <Item
+              label="Batch"
+              value={member.batch === "any" ? BATCH_LABELS.any : `${BATCH_LABELS[member.batch]} · ${batchHoursLabel(member.batch, batchHoursOf(ctx.gym.settings))}`}
+            />
             <Item
               label="Emergency contact"
               value={member.emergencyContactName ? `${member.emergencyContactName}${member.emergencyContactPhone ? ` · ${formatPhone(member.emergencyContactPhone)}` : ""}` : null}

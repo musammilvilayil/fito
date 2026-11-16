@@ -18,14 +18,14 @@ export function TBody({ className, ...props }: HTMLAttributes<HTMLTableSectionEl
 }
 
 export function TR({ className, ...props }: HTMLAttributes<HTMLTableRowElement>) {
-  return <tr className={cn("transition-colors hover:bg-raised/60", className)} {...props} />;
+  return <tr className={cn("transition-colors hover:bg-white/50", className)} {...props} />;
 }
 
 export function TH({ className, ...props }: ThHTMLAttributes<HTMLTableCellElement>) {
   return (
     <th
       className={cn(
-        "whitespace-nowrap px-4 py-2.5 text-left text-[11.5px] font-medium uppercase tracking-wider text-ink-subtle first:pl-5 last:pr-5",
+        "whitespace-nowrap px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-[0.08em] text-ink-subtle first:pl-5 last:pr-5",
         className,
       )}
       {...props}
@@ -34,5 +34,5 @@ export function TH({ className, ...props }: ThHTMLAttributes<HTMLTableCellElemen
 }
 
 export function TD({ className, ...props }: TdHTMLAttributes<HTMLTableCellElement>) {
-  return <td className={cn("px-4 py-3 align-middle text-ink first:pl-5 last:pr-5", className)} {...props} />;
+  return <td className={cn("px-4 py-3.5 align-middle text-ink first:pl-5 last:pr-5", className)} {...props} />;
 }

@@ -29,6 +29,28 @@ _Status as of 15 November 2026 (branch `fito-web-mvp`)._
 * WhatsApp click-to-chat links for invites, reset links and renewal
   reminders (staff tap to send from their own WhatsApp).
 
+### At the gym: door QR, crowd, batches and equipment
+* **Entrance and exit QR.** Attendance → Entrance & exit QR shows two
+  posters to print. A member scans the entrance code (phone camera or Home →
+  Scan gym QR) and is checked in; the exit code checks them out and shows
+  their time in the gym. It only ever checks in the signed-in member, only
+  at that gym, with the same rules as the desk (expired, frozen, one
+  check-in a day). Signed-out members sign in and are taken straight back.
+  Owners can replace both codes; old posters stop working at once.
+* **Gym right now.** The member home shows how many people are inside, how
+  full that is against the gym's capacity (Settings), and the usual
+  check-ins per hour for today's weekday (last 8 weeks), with the busiest and
+  a quieter hour. Counts only, never names. The assistant answers "is the gym
+  busy?" from the same numbers.
+* **Morning and evening batches.** Members are morning, evening or any time
+  (member form, list filter, profile). Settings hold the batch hours and the
+  rule: allow with a warning (default), refuse unless an owner or manager
+  overrides, or ignore.
+* **Equipment list.** A catalogue of about 110 common items in 8 groups.
+  Owners, managers and trainers add items with quantities, change counts
+  with a stepper and add their own items. Front desk and members see the
+  list. Workout plans use exercises for the listed equipment.
+
 ### Trainer
 * Sees only assigned members.
 * Fitness profile, PAR-Q style health screening and medical clearance.
@@ -99,8 +121,9 @@ _Status as of 15 November 2026 (branch `fito-web-mvp`)._
 * Trainers can add members, who are assigned to them.
 
 ### Demo gym for sales
-* `npm run db:seed-demo` creates a demo gym with an owner, a trainer and 100
-  fictional members, plus two months of realistic history.
+* `npm run db:seed-demo` creates a demo gym with an owner, a trainer, a front
+  desk and 100 fictional members, plus two months of realistic history
+  (batches, door check-outs and an equipment list included).
 * It's marked with a "Demo data" badge, re-runnable, and never touches real
   gyms (see README).
 
@@ -140,6 +163,15 @@ _Status as of 15 November 2026 (branch `fito-web-mvp`)._
   no public (signed-out) support chatbot: it would need abuse and cost
   controls first.
 * **Member details** (name, phone) are changed by staff, not by members.
+* **Door QR posters are fixed codes.** A member with a photo of the entrance
+  poster could check in without being at the gym. FITO has no location or
+  Wi-Fi check. If a photo is shared, replace the codes (Attendance →
+  Entrance & exit QR). A code shown on a screen that changes every minute
+  would close this gap; it isn't built.
+* **One check-in per day.** A member who leaves and comes back later the
+  same day isn't checked in again (the entrance code says so).
+* **"Inside now" is an estimate** for people who don't scan the exit code:
+  they're counted until the typical visit length (Settings) has passed.
 * **Single language** (English). Malayalam is not added yet.
 * **Not yet checked on real phones**, iOS Safari, with a screen reader, or
   under load (see `TESTING.md`).

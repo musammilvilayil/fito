@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/form";
 import { Avatar } from "@/components/ui/page";
 import { ApiError, api, errorMessage } from "@/lib/api";
 import { cn } from "@/lib/cn";
+import { useQrCamera } from "@/lib/use-qr-camera";
 import { formatDate } from "@/shared/dates";
 import { formatINR } from "@/shared/money";
 import { formatPhone } from "@/shared/phone";
@@ -16,13 +17,12 @@ import { formatPhone } from "@/shared/phone";
 type Ok = {
   status: "checked_in";
   overridden: boolean;
+  batchNote: string | null;
   member: { id: string; fullName: string; memberCode: string; planName: string | null; validUntil: string | null; daysLeft: number | null; duePaise: number };
 };
 type Outcome =
   | { kind: "ok"; data: Ok; at: number }
   | { kind: "error"; code: string; message: string; member?: { id: string; fullName: string; memberCode: string }; retry?: { qr?: string; memberId?: string }; at: number };
-
-type BarcodeDetectorLike = { detect: (src: CanvasImageSource) => Promise<{ rawValue: string }[]> };
 
 /**
  * Front-desk check-in. Three ways in: the device camera (BarcodeDetector,
@@ -30,19 +30,16 @@ type BarcodeDetectorLike = { detect: (src: CanvasImageSource) => Promise<{ rawVa
  * focused box and presses Enter), or searching the member by name/phone.
  */
 export function Scanner({ canOverride }: { canOverride: boolean }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
   const lastScan = useRef<{ text: string; at: number } | null>(null);
   const busyRef = useRef(false);
-  const [camera, setCamera] = useState<"off" | "starting" | "on" | "error">("off");
-  const [cameraError, setCameraError] = useState<string | null>(null);
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const [history, setHistory] = useState<Outcome[]>([]);
   const [busy, setBusy] = useState(false);
   const [wedge, setWedge] = useState("");
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<{ id: string; fullName: string; memberCode: string; phone: string | null }[]>([]);
+  type Found = { id: string; fullName: string; memberCode: string; phone: string | null };
+  // Results remember the query they answer, so a new search never shows the previous person.
+  const [results, setResults] = useState<{ q: string; items: Found[] }>({ q: "", items: [] });
   const [overrideReason, setOverrideReason] = useState("");
 
   const submit = useCallback(async (body: { qr?: string; memberId?: string; overrideReason?: string }) => {
@@ -85,84 +82,8 @@ export function Scanner({ canOverride }: { canOverride: boolean }) {
     },
     [submit],
   );
+  const { videoRef, canvasRef, camera, cameraError, startCamera, stopCamera } = useQrCamera(onDecoded, busyRef);
 
-  const stopCamera = useCallback(() => {
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    streamRef.current = null;
-    setCamera("off");
-  }, []);
-
-  async function startCamera() {
-    setCameraError(null);
-    setCamera("starting");
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false });
-      streamRef.current = stream;
-      const video = videoRef.current!;
-      video.srcObject = stream;
-      await video.play();
-      setCamera("on");
-    } catch (err) {
-      const name = (err as Error).name;
-      setCameraError(
-        name === "NotAllowedError"
-          ? "Camera permission was denied. Allow camera access in the browser settings, or use a handheld scanner / search below."
-          : name === "NotFoundError"
-            ? "No camera found on this device. Use a handheld scanner or search below."
-            : "Couldn't start the camera. The page must be opened over HTTPS (or localhost).",
-      );
-      setCamera("error");
-    }
-  }
-
-  // Decode loop while the camera is on (~6 frames/second).
-  useEffect(() => {
-    if (camera !== "on") return;
-    let stopped = false;
-    let detector: BarcodeDetectorLike | null = null;
-    let jsQR: typeof import("jsqr").default | null = null;
-    const w = window as unknown as { BarcodeDetector?: new (o: { formats: string[] }) => BarcodeDetectorLike };
-    if (w.BarcodeDetector) {
-      try {
-        detector = new w.BarcodeDetector({ formats: ["qr_code"] });
-      } catch {
-        detector = null;
-      }
-    }
-    if (!detector) void import("jsqr").then((m) => (jsQR = m.default));
-
-    const tick = async () => {
-      if (stopped) return;
-      const video = videoRef.current;
-      if (video && video.readyState >= 2 && !busyRef.current) {
-        try {
-          if (detector) {
-            const codes = await detector.detect(video);
-            if (codes[0]?.rawValue) onDecoded(codes[0].rawValue);
-          } else if (jsQR) {
-            const canvas = canvasRef.current!;
-            const scale = Math.min(1, 640 / video.videoWidth);
-            canvas.width = Math.round(video.videoWidth * scale);
-            canvas.height = Math.round(video.videoHeight * scale);
-            const g = canvas.getContext("2d", { willReadFrequently: true })!;
-            g.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const img = g.getImageData(0, 0, canvas.width, canvas.height);
-            const code = jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" });
-            if (code?.data) onDecoded(code.data);
-          }
-        } catch {
-          /* keep scanning */
-        }
-      }
-      setTimeout(tick, 160);
-    };
-    void tick();
-    return () => {
-      stopped = true;
-    };
-  }, [camera, onDecoded]);
-
-  useEffect(() => stopCamera, [stopCamera]);
 
   // Clear the big result card after a few seconds so the next person is obvious.
   useEffect(() => {
@@ -176,9 +97,11 @@ export function Scanner({ canOverride }: { canOverride: boolean }) {
     if (q.length < 2) return;
     const ctrl = new AbortController();
     const t = setTimeout(() => {
-      api<typeof results>(`/attendance/search?q=${encodeURIComponent(q)}`, { signal: ctrl.signal })
-        .then(setResults)
-        .catch(() => undefined);
+      api<Found[]>(`/attendance/search?q=${encodeURIComponent(q)}`, { signal: ctrl.signal })
+        .then((items) => setResults({ q, items }))
+        .catch((err) => {
+          if ((err as Error).name !== "AbortError") setResults({ q, items: [] });
+        });
     }, 250);
     return () => {
       clearTimeout(t);
@@ -186,9 +109,11 @@ export function Scanner({ canOverride }: { canOverride: boolean }) {
     };
   }, [query]);
 
-  // Results only apply to a real query (stale results are hidden, not cleared in an effect).
-  const shownResults = query.trim().length >= 2 ? results : [];
-  const canOverrideThis = outcome?.kind === "error" && canOverride && outcome.code.startsWith("not_allowed_") && outcome.code !== "not_allowed_inactive";
+  // Only results for exactly what's typed now (stale results are hidden, not cleared in an effect).
+  const searching = query.trim().length >= 2 && results.q !== query.trim();
+  const shownResults = query.trim().length >= 2 && results.q === query.trim() ? results.items : [];
+  const canOverrideThis =
+    outcome?.kind === "error" && canOverride && ((outcome.code.startsWith("not_allowed_") && outcome.code !== "not_allowed_inactive") || outcome.code === "outside_batch");
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
@@ -289,7 +214,8 @@ export function Scanner({ canOverride }: { canOverride: boolean }) {
                 ))}
               </ul>
             )}
-            {query.trim().length >= 2 && shownResults.length === 0 && <p className="text-[13px] text-ink-subtle">No active members match.</p>}
+            {searching && <p className="text-[13px] text-ink-subtle">Searching…</p>}
+            {!searching && query.trim().length >= 2 && shownResults.length === 0 && <p className="text-[13px] text-ink-subtle">No active members match.</p>}
           </CardBody>
         </Card>
         <Card>
@@ -367,8 +293,9 @@ function ResultOverlay({ outcome }: { outcome: Outcome }) {
             </div>
           </div>
         </div>
-        {(m.daysLeft !== null && m.daysLeft <= 7) || m.duePaise > 0 ? (
+        {(m.daysLeft !== null && m.daysLeft <= 7) || m.duePaise > 0 || outcome.data.batchNote ? (
           <div className="mt-3 flex flex-wrap gap-2 text-[12.5px]">
+            {outcome.data.batchNote && <span className="rounded-full bg-warning/15 px-2.5 py-1 font-medium text-warning">{outcome.data.batchNote}</span>}
             {m.daysLeft !== null && m.daysLeft <= 7 && (
               <span className="rounded-full bg-warning/15 px-2.5 py-1 font-medium text-warning">
                 {m.daysLeft <= 0 ? "Last day today" : `${m.daysLeft} day${m.daysLeft === 1 ? "" : "s"} left`}: remind to renew

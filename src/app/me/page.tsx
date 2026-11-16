@@ -1,12 +1,14 @@
-import { ChevronRight, Dumbbell, IndianRupee, QrCode, Scale, Sparkles, UserRound } from "lucide-react";
+import { ChevronRight, Dumbbell, IndianRupee, ScanLine, Scale, Sparkles, UserRound } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { CrowdCard } from "@/components/member/crowd-card";
 import { ProgressRing, WeekBars, type DayBar } from "@/components/member/week-widgets";
 import { StandingBadge } from "@/components/members/standing-badge";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/states";
 import { cn } from "@/lib/cn";
 import { addDays, diffDays, formatDate, formatTime } from "@/shared/dates";
+import { BATCH_LABELS, batchHoursLabel } from "@/shared/batches";
 import { CAN_CHECK_IN } from "@/shared/membership";
 import { formatINR } from "@/shared/money";
 import { GOAL_LABELS, LEVEL_LABELS, WEEKDAYS, type ExperienceLevel, type FitnessGoal } from "@/shared/schemas/workout";
@@ -15,6 +17,8 @@ import { isForToday, suggestDay, weekdayIndex } from "@/shared/workout-schedule"
 import { inGym } from "@/server/auth/context";
 import { requireMemberContext } from "@/server/auth/page";
 import { assistantAvailability } from "@/server/modules/assistant/service";
+import { gymCrowd } from "@/server/modules/attendance/crowd";
+import { sequential } from "@/server/db/tx";
 import { gymToday } from "@/server/modules/members/service";
 import { memberHome } from "@/server/modules/portal/service";
 import { CheckInQr } from "./check-in-qr";
@@ -26,7 +30,7 @@ const DAY_LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
 
 export default async function MemberHomePage() {
   const ctx = await requireMemberContext();
-  const home = await inGym(ctx, (tx) => memberHome(tx, ctx));
+  const [home, crowd] = await inGym(ctx, (tx) => sequential(() => memberHome(tx, ctx), () => gymCrowd(tx, ctx)));
   const today = gymToday(ctx);
   const { member, attendance, plan, logs } = home;
   const current = member.current;
@@ -54,7 +58,7 @@ export default async function MemberHomePage() {
   const actions = [
     { href: day ? `/me/workouts?day=${encodeURIComponent(day.key)}` : "/me/workouts", label: "Start workout", icon: Dumbbell, tone: "bg-lime-soft text-lime" },
     { href: "/me/progress?add=1", label: "Log weight", icon: Scale, tone: "bg-coral-soft text-[#c94f33]" },
-    { href: "#check-in", label: "Check-in QR", icon: QrCode, tone: "bg-[#fdf1d8] text-[#a14a06]" },
+    { href: "/me/scan", label: "Scan gym QR", icon: ScanLine, tone: "bg-[#fdf1d8] text-[#a14a06]" },
     askAvailable
       ? { href: "/me/assistant", label: "Ask FITO", icon: Sparkles, tone: "bg-[#ece6fb] text-[#5b3fb8]" }
       : { href: "/me/profile", label: "My profile", icon: UserRound, tone: "bg-[#ece6fb] text-[#5b3fb8]" },
@@ -66,6 +70,8 @@ export default async function MemberHomePage() {
         <h1 className="text-[24px] font-semibold tracking-tight">Hi, {firstName} 👋</h1>
         <p className="text-sm text-ink-muted">{doneToday ? "Great work today. Rest well!" : "Ready to crush your goals?"}</p>
       </div>
+
+      <CrowdCard initial={crowd} timezone={ctx.gym.timezone} batch={member.batch === "any" ? null : `${BATCH_LABELS[member.batch]} · ${batchHoursLabel(member.batch, crowd.batches)}`} />
 
       <Card>
         <CardBody className="flex items-center gap-5">

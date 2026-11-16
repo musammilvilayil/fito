@@ -17,7 +17,7 @@ export function EmptyState({
 }) {
   return (
     <div className={cn("flex flex-col items-center justify-center px-6 py-14 text-center", className)}>
-      <div className="mb-4 grid size-12 place-items-center rounded-2xl border border-line bg-raised">
+      <div className="mb-4 grid size-14 place-items-center rounded-full bg-lime-soft">
         <Icon className="size-5 text-lime" aria-hidden />
       </div>
       <h3 className="text-[15px] font-semibold text-ink">{title}</h3>
@@ -28,7 +28,7 @@ export function EmptyState({
 }
 
 export function Skeleton({ className }: { className?: string }) {
-  return <div className={cn("animate-pulse rounded-lg bg-raised", className)} aria-hidden />;
+  return <div className={cn("animate-pulse rounded-2xl bg-white/50", className)} aria-hidden />;
 }
 
 export function PageSkeleton() {
